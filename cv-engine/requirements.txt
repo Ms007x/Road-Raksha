@@ -1,0 +1,38 @@
+"""
+Road-Raksha CV Engine Requirements
+Python 3.10+
+"""
+
+# Core CV and ML
+ultralytics==8.1.0
+opencv-python==4.8.1.78
+torch==2.1.0
+torchvision==0.16.0
+numpy==1.24.3
+Pillow==10.1.0
+
+# Video processing
+ffmpeg-python==0.2.0
+av==11.0.0
+
+# RTSP and streaming
+opencv-contrib-python==4.8.1.78
+imutils==0.5.4
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Logging and monitoring
+loguru==0.7.2
+
+# API communication
+httpx==0.25.2
+websockets==12.0
+
+# Redis for caching
+redis==5.0.1
+
+# Configuration
+pyyaml==6.0.1
