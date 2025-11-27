@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer = () => {
     return (
-        <footer className="h-8 bg-darker/90 backdrop-blur-md border-t border-panel-border flex items-center justify-between px-4 z-50 absolute bottom-0 w-full">
+        <footer className="h-8 bg-darker/90 backdrop-blur-md border-t border-panel-border flex items-center justify-between px-4 z-50 w-full shrink-0 pointer-events-auto">
             <div className="flex items-center gap-4 text-[10px] text-slate-400">
                 <span className="text-success">System Online</span>
                 <span>•</span>

@@ -1,35 +1,45 @@
 import React from 'react';
 import { Shield, LayoutDashboard, Bell, BarChart2, Folder, Settings, User, BellRing } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
+    const location = useLocation();
+    const isActive = (path) => location.pathname === path;
+
+    const getLinkClass = (path) => {
+        return isActive(path)
+            ? "flex items-center gap-2 px-4 py-2 text-primary bg-primary/10 rounded-t-lg border-b-2 border-primary transition-all"
+            : "flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all";
+    };
+
     return (
-        <header className="h-16 bg-darker/80 backdrop-blur-md flex items-center justify-between px-6 border-b border-panel-border z-50">
+        <header className="h-16 bg-darker/80 backdrop-blur-md flex items-center justify-between px-6 border-b border-panel-border z-50 pointer-events-auto">
             <div className="flex items-center gap-3">
                 <Shield className="w-8 h-8 text-primary fill-primary/20" />
                 <h1 className="text-xl font-bold text-white tracking-tight">Road Raksha</h1>
             </div>
 
             <nav className="hidden md:flex items-center gap-1">
-                <button className="flex items-center gap-2 px-4 py-2 text-primary bg-primary/10 rounded-t-lg border-b-2 border-primary transition-all">
+                <Link to="/dashboard" className={getLinkClass('/dashboard')}>
                     <LayoutDashboard className="w-4 h-4" />
                     <span className="font-medium text-sm">Dashboard</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                </Link>
+                <Link to="/incidents" className={getLinkClass('/incidents')}>
                     <Bell className="w-4 h-4" />
                     <span className="font-medium text-sm">Incidents</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                </Link>
+                <Link to="/analytics" className={getLinkClass('/analytics')}>
                     <BarChart2 className="w-4 h-4" />
                     <span className="font-medium text-sm">Analytics</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                </Link>
+                <Link to="/resources" className={getLinkClass('/resources')}>
                     <Folder className="w-4 h-4" />
                     <span className="font-medium text-sm">Resources</span>
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                </Link>
+                <Link to="/settings" className={getLinkClass('/settings')}>
                     <Settings className="w-4 h-4" />
                     <span className="font-medium text-sm">Settings</span>
-                </button>
+                </Link>
             </nav>
 
             <div className="flex items-center gap-4">

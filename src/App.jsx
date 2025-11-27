@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import IncidentsPage from './pages/IncidentsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ResourcesPage from './pages/ResourcesPage';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,6 +39,38 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <DashboardPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/incidents"
+                    element={
+                        <ProtectedRoute>
+                            <IncidentsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/analytics"
+                    element={
+                        <ProtectedRoute>
+                            <AnalyticsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/resources"
+                    element={
+                        <ProtectedRoute>
+                            <ResourcesPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/settings"
+                    element={
+                        <ProtectedRoute>
+                            <SettingsPage />
                         </ProtectedRoute>
                     }
                 />
