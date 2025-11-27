@@ -84,54 +84,109 @@ const MapComponent = () => {
         [28.62, 77.21]
     ];
 
-    return (
-        <MapContainer
-            center={defaultCenter}
-            zoom={13}
-            scrollWheelZoom={true}
-            zoomControl={false}
-            className="h-full w-full bg-darker"
-        >
-            {/* Dark Matter Tiles */}
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
+    const [ambulances, setAmbulances] = useState([]);
 
-            {/* User Location Marker & Recenter Logic */}
-            {userLocation && (
-                <>
-                    <Marker position={userLocation} icon={icons.user}>
+    // Fetch ambulances periodically
+    useEffect(() => {
+        if (!userLocation) return;
+
+        const fetchAmbulances = async () => {
+            try {
+                const response = await fetch(`http://localhost:3000/api/ambulances?lat=${userLocation[0]}&lng=${userLocation[1]}`);
+                const data = await response.json();
+                if (data.success) {
+                    setAmbulances(data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch ambulances:", error);
+            }
+        };
+
+        // Initial fetch
+        fetchAmbulances();
+
+        // Poll every 2 seconds
+        const interval = setInterval(fetchAmbulances, 2000);
+        return () => clearInterval(interval);
+    }, [userLocation]);
+
+    const userIcon = icons.user;
+
+    // Custom Emoji Icon for Ambulance
+    const ambulanceIcon = new L.DivIcon({
+        className: 'bg-transparent',
+        html: '<div style="font-size: 24px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🚑</div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+    });
+
+    return (
+        <div className="w-full h-full relative z-0">
+            <MapContainer
+                center={userLocation || [28.6139, 77.2090]}
+                zoom={13}
+                className="w-full h-full"
+                zoomControl={false}
+            >
+                <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                />
+
+                {/* User Location Marker */}
+                {userLocation && (
+                    <Marker position={userLocation} icon={userIcon}>
                         <Popup className="custom-popup">
-                            <div className="font-bold text-slate-800">You are here</div>
+                            <div className="p-2">
+                                <h3 className="font-bold text-gray-900">You are here</h3>
+                                <p className="text-sm text-gray-600">Current Location</p>
+                            </div>
                         </Popup>
                     </Marker>
-                    <RecenterAutomatically lat={userLocation[0]} lng={userLocation[1]} />
-                </>
-            )}
+                )}
 
-            {/* Incidents */}
-            {incidents.map(inc => (
-                <Marker key={inc.id} position={inc.pos} icon={icons[inc.type]}>
-                    <Popup className="custom-popup">
-                        <div className="font-bold text-slate-800">{inc.title}</div>
-                    </Popup>
-                </Marker>
-            ))}
+                {/* Ambulance Markers */}
+                {ambulances.map((amb) => (
+                    <Marker
+                        key={amb.id}
+                        position={[amb.location.lat, amb.location.lng]}
+                        icon={ambulanceIcon}
+                    >
+                        <Popup className="custom-popup">
+                            <div className="p-2 min-w-[200px]">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="font-bold text-gray-900">{amb.id}</h3>
+                                    <span className={`px-2 py-0.5 rounded-full text-xs text-white ${amb.status === 'Available' ? 'bg-green-500' :
+                                            amb.status === 'Busy' ? 'bg-red-500' : 'bg-blue-500'
+                                        }`}>
+                                        {amb.status}
+                                    </span>
+                                </div>
+                                <div className="space-y-1 text-sm text-gray-600">
+                                    <p><strong>Driver:</strong> {amb.driverName}</p>
+                                    <p><strong>Speed:</strong> {amb.speed} km/h</p>
+                                    <p className="text-xs text-gray-400 mt-2">Last updated: {new Date(amb.lastUpdated).toLocaleTimeString()}</p>
+                                </div>
+                            </div>
+                        </Popup>
+                    </Marker>
+                ))}
 
-            {/* Units */}
-            {units.map(unit => (
-                <Marker key={unit.id} position={unit.pos} icon={icons[unit.type]}>
-                    <Popup className="custom-popup">
-                        <div className="font-bold text-slate-800">{unit.title}</div>
-                    </Popup>
-                </Marker>
-            ))}
+                {/* Incidents (retained from original) */}
+                {incidents.map(inc => (
+                    <Marker key={inc.id} position={inc.pos} icon={icons[inc.type]}>
+                        <Popup className="custom-popup">
+                            <div className="font-bold text-slate-800">{inc.title}</div>
+                        </Popup>
+                    </Marker>
+                ))}
 
-            {/* Dispatch Route */}
-            <Polyline positions={route} color="#3b82f6" weight={4} opacity={0.7} dashArray="10, 10" />
+                {/* Dispatch Route (retained from original) */}
+                <Polyline positions={route} color="#3b82f6" weight={4} opacity={0.7} dashArray="10, 10" />
 
-        </MapContainer>
+                <RecenterAutomatically lat={userLocation?.[0]} lng={userLocation?.[1]} />
+            </MapContainer>
+        </div>
     );
 };
 
