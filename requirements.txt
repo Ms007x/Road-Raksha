@@ -1,0 +1,26 @@
+# Road Raksha - Project Requirements
+
+## Prerequisites
+- Node.js (v18.0.0 or higher)
+- npm (v9.0.0 or higher)
+
+## Frontend Dependencies (Root)
+# Install with: npm install
+autoprefixer
+postcss
+tailwindcss
+vite
+react
+react-dom
+react-router-dom
+leaflet
+react-leaflet
+lucide-react
+recharts
+
+## Backend Dependencies (server/)
+# Install with: cd server && npm install
+express
+cors
+axios
+nodemon (dev)
