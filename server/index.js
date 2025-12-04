@@ -17,7 +17,7 @@ const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 // Mock Data Sources
 const driverNames = [
     "Rahul Singh", "Vikram Malhotra", "Amit Kumar", "Suresh Raina",
-    "Priya Sharma", "Anjali Gupta", "Rohan Das", "Karan Johar",
+    "Chandu Model", "Anjali Gupta", "Rohan Das", "Karan Johar",
     "Sneha Reddy", "Arjun Kapoor"
 ];
 
