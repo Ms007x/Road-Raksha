@@ -157,7 +157,7 @@ const MapComponent = () => {
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="font-bold text-gray-900">{amb.id}</h3>
                                     <span className={`px-2 py-0.5 rounded-full text-xs text-white ${amb.status === 'Available' ? 'bg-green-500' :
-                                            amb.status === 'Busy' ? 'bg-red-500' : 'bg-blue-500'
+                                        amb.status === 'Busy' ? 'bg-red-500' : 'bg-blue-500'
                                         }`}>
                                         {amb.status}
                                     </span>
