@@ -5,8 +5,3 @@
 body {
     @apply bg-slate-900 text-white;
 }
-
-.leaflet-container {
-    width: 100%;
-    height: 100%;
-}

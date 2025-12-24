@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell, Legend
@@ -7,23 +7,7 @@ import { Activity, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-// Mock Data
-const incidentsData = [
-    { name: '00:00', incidents: 2 },
-    { name: '04:00', incidents: 1 },
-    { name: '08:00', incidents: 5 },
-    { name: '12:00', incidents: 8 },
-    { name: '16:00', incidents: 12 },
-    { name: '20:00', incidents: 6 },
-    { name: '23:59', incidents: 3 },
-];
-
-const severityData = [
-    { name: 'Critical', value: 35, color: '#ef4444' },
-    { name: 'Major', value: 25, color: '#f97316' },
-    { name: 'Minor', value: 40, color: '#eab308' },
-];
-
+// Static Data for "Response Time" (Since we don't track ambulances deeply yet)
 const responseTimeData = [
     { zone: 'North', time: 12 },
     { zone: 'South', time: 8 },
@@ -46,6 +30,37 @@ const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
 );
 
 const AnalyticsPage = () => {
+    const [stats, setStats] = useState({
+        total: 0,
+        severityData: [],
+        hourlyData: []
+    });
+
+    // Fetch from Real Backend
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/analytics');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setStats({
+                            total: data.total,
+                            severityData: data.severityData,
+                            hourlyData: data.hourlyData
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch analytics:", err);
+            }
+        };
+
+        fetchStats();
+        // Poll every 5s
+        const interval = setInterval(fetchStats, 5000);
+        return () => clearInterval(interval);
+    }, []);
     return (
         <div className="min-h-screen w-full bg-darker flex flex-col font-sans text-white">
             <Header />
@@ -63,8 +78,8 @@ const AnalyticsPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
                             title="Total Incidents"
-                            value="124"
-                            subtext="+12% from yesterday"
+                            value={stats.total}
+                            subtext="Recorded in database"
                             icon={Activity}
                             color="primary"
                         />
@@ -77,15 +92,15 @@ const AnalyticsPage = () => {
                         />
                         <StatCard
                             title="Active Alerts"
-                            value="12"
-                            subtext="3 Critical"
+                            value={stats.total}
+                            subtext="Verified Incidents"
                             icon={AlertTriangle}
                             color="critical"
                         />
                         <StatCard
                             title="Resolved Cases"
-                            value="1,284"
-                            subtext="98% clearance rate"
+                            value="0"
+                            subtext="Tracking enabled"
                             icon={CheckCircle}
                             color="success"
                         />
@@ -96,10 +111,10 @@ const AnalyticsPage = () => {
 
                         {/* Main Chart: Incidents Over Time */}
                         <div className="lg:col-span-2 bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 flex flex-col">
-                            <h3 className="text-lg font-semibold text-white mb-6">Incidents Overview (24h)</h3>
+                            <h3 className="text-lg font-semibold text-white mb-6">Incidents Overview (Hourly)</h3>
                             <div className="flex-1 w-full min-h-0">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={incidentsData}>
+                                    <AreaChart data={stats.hourlyData}>
                                         <defs>
                                             <linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -126,7 +141,7 @@ const AnalyticsPage = () => {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={severityData}
+                                            data={stats.severityData}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
@@ -134,7 +149,7 @@ const AnalyticsPage = () => {
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
-                                            {severityData.map((entry, index) => (
+                                            {stats.severityData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                                             ))}
                                         </Pie>

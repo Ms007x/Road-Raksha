@@ -1,81 +1,178 @@
-import React from 'react';
-import { Truck, Phone, Battery, MapPin, Shield, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Truck, Phone, Battery, MapPin, Shield, Activity, Camera, Video, Building2, Stethoscope, Navigation } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const resources = [
-    { id: 'AMB-01', type: 'Ambulance', driver: 'Rahul Singh', status: 'On Mission', battery: '85%', location: 'Sector 4', color: 'critical' },
-    { id: 'AMB-02', type: 'Ambulance', driver: 'Vikram Malhotra', status: 'Available', battery: '100%', location: 'Base Station', color: 'success' },
-    { id: 'PTR-01', type: 'Patrol Unit', driver: 'Sgt. Kaur', status: 'Patrolling', battery: '60%', location: 'Highway 8', color: 'info' },
-    { id: 'PTR-02', type: 'Patrol Unit', driver: 'Ofc. Sharma', status: 'Maintenance', battery: '0%', location: 'Workshop', color: 'warning' },
-    { id: 'FIR-01', type: 'Fire Truck', driver: 'Capt. Verma', status: 'Available', battery: '95%', location: 'Station 1', color: 'success' },
-    { id: 'DRN-01', type: 'Drone Unit', driver: 'Auto-Pilot', status: 'Airborne', battery: '45%', location: 'Sector 7', color: 'info' },
+// Mock Data for Non-Ambulance Resources
+const cctvs = [
+    { id: 'CAM-01', location: 'Main Junction (Jagtial)', status: 'Active', type: 'Traffic Cam', alerts: 0 },
+    { id: 'CAM-02', location: 'Highway 8 South', status: 'Active', type: 'Speed Cam', alerts: 2 },
+    { id: 'CAM-03', location: 'Market Road', status: 'Offline', type: 'Surveillance', alerts: 0 },
+    { id: 'CAM-04', location: 'School Zone A', status: 'Active', type: 'Safety Cam', alerts: 0 },
 ];
 
-const ResourceCard = ({ resource }) => (
-    <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 hover:bg-panel/70 transition-all group">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-lg bg-${resource.color}/10 text-${resource.color} group-hover:scale-110 transition-transform`}>
-                {resource.type.includes('Ambulance') ? <Activity className="w-6 h-6" /> :
-                    resource.type.includes('Patrol') ? <Shield className="w-6 h-6" /> : <Truck className="w-6 h-6" />}
+const hospitals = [
+    { id: 'HOS-01', name: 'City General Hospital', location: 'Sector 4', beds: '12/50', trauma: 'Level 1', status: 'Open' },
+    { id: 'HOS-02', name: 'MediCare Trauma Center', location: 'Highway 8', beds: '4/20', trauma: 'Level 2', status: 'Busy' },
+    { id: 'HOS-03', name: 'Apollo Emergency', location: 'Downtown', beds: '18/30', trauma: 'Level 1', status: 'Open' },
+];
+
+const ResourceCard = ({ resource, type }) => {
+    let Icon = Activity;
+    let color = 'primary';
+
+    if (type === 'AMBULANCE') {
+        Icon = Truck;
+        color = resource.status === 'Available' ? 'success' : (resource.status === 'Busy' ? 'critical' : 'warning');
+    } else if (type === 'CCTV') {
+        Icon = Camera;
+        color = resource.status === 'Active' ? 'success' : 'slate-500';
+    } else if (type === 'HOSPITAL') {
+        Icon = Building2;
+        color = resource.status === 'Open' ? 'success' : 'warning';
+    }
+
+    return (
+        <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 hover:bg-panel/70 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-lg bg-${color}/10 text-${color} group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-6 h-6" />
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${color}/20 text-${color} border border-${color}/20`}>
+                    {resource.status}
+                </span>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${resource.color}/20 text-${resource.color} border border-${resource.color}/20`}>
-                {resource.status}
-            </span>
+
+            <h3 className="text-xl font-bold text-white mb-1">
+                {type === 'AMBULANCE' ? resource.id : (type === 'HOSPITAL' ? resource.name : resource.id)}
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+                {type === 'AMBULANCE' ? resource.driverName : (type === 'HOSPITAL' ? 'Emergency Center' : resource.type)}
+            </p>
+
+            <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <MapPin className="w-4 h-4 text-slate-500" />
+                    <span>{resource.location.lat ? `Lat: ${resource.location.lat.toFixed(4)}` : resource.location}</span>
+                </div>
+
+                {type === 'AMBULANCE' && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <Navigation className="w-4 h-4 text-slate-500" />
+                        <span>{resource.speed} km/h</span>
+                    </div>
+                )}
+
+                {type === 'HOSPITAL' && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <Activity className="w-4 h-4 text-slate-500" />
+                        <span>Beds Available: {resource.beds}</span>
+                    </div>
+                )}
+                {type === 'CCTV' && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <Video className="w-4 h-4 text-slate-500" />
+                        <span>Alerts Today: {resource.alerts}</span>
+                    </div>
+                )}
+            </div>
+
+            <button className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white flex items-center justify-center gap-2 transition-colors">
+                <Phone className="w-4 h-4" />
+                {type === 'CCTV' ? 'View Feed' : 'Contact'}
+            </button>
         </div>
-
-        <h3 className="text-xl font-bold text-white mb-1">{resource.id}</h3>
-        <p className="text-sm text-slate-400 mb-4">{resource.type}</p>
-
-        <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-                <UserIcon className="w-4 h-4 text-slate-500" />
-                <span>{resource.driver}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-                <MapPin className="w-4 h-4 text-slate-500" />
-                <span>{resource.location}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-                <Battery className="w-4 h-4 text-slate-500" />
-                <span>{resource.battery} Fuel/Charge</span>
-            </div>
-        </div>
-
-        <button className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white flex items-center justify-center gap-2 transition-colors">
-            <Phone className="w-4 h-4" />
-            Contact Unit
-        </button>
-    </div>
-);
-
-// Helper icon
-const UserIcon = ({ className }) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-);
+    );
+};
 
 const ResourcesPage = () => {
+    const [activeTab, setActiveTab] = useState('CCTV');
+    const [ambulances, setAmbulances] = useState([]);
+    const [hospitals, setHospitals] = useState([]);
+
+    // Fetch Ambulances
+    useEffect(() => {
+        const fetchAmbulances = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/ambulances');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setAmbulances(data.data);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch ambulances", err);
+            }
+        };
+        fetchAmbulances();
+        const interval = setInterval(fetchAmbulances, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fetch Hospitals
+    useEffect(() => {
+        const fetchHospitals = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/hospitals');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setHospitals(data.data);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch hospitals", err);
+            }
+        };
+        if (activeTab === 'HOSPITALS') {
+            fetchHospitals();
+        }
+    }, [activeTab]);
+
+    const tabs = ['CCTV', 'AMBULANCES', 'HOSPITALS'];
+
     return (
         <div className="min-h-screen w-full bg-darker flex flex-col font-sans text-white">
             <Header />
 
             <main className="flex-1 p-6 overflow-auto">
                 <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div>
-                            <h1 className="text-2xl font-bold text-white">Fleet Resources</h1>
-                            <p className="text-slate-400 mt-1">Manage and track all emergency response units.</p>
+                            <h1 className="text-2xl font-bold text-white">Emergency Resources</h1>
+                            <p className="text-slate-400 mt-1">Manage CCTV Network, Fleet, and Medical Centers.</p>
                         </div>
-                        <button className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            + Add New Unit
-                        </button>
+
+                        {/* Tabs */}
+                        <div className="flex bg-panel border border-panel-border rounded-lg p-1">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab
+                                        ? 'bg-primary text-white shadow-lg'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
+                    {/* Content */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {resources.map(resource => (
-                            <ResourceCard key={resource.id} resource={resource} />
+                        {activeTab === 'CCTV' && cctvs.map(res => (
+                            <ResourceCard key={res.id} resource={res} type="CCTV" />
+                        ))}
+
+                        {activeTab === 'AMBULANCES' && ambulances.map(res => (
+                            <ResourceCard key={res.id} resource={res} type="AMBULANCE" />
+                        ))}
+
+                        {activeTab === 'HOSPITALS' && hospitals.map(res => (
+                            <ResourceCard key={res.id} resource={res} type="HOSPITAL" />
                         ))}
                     </div>
                 </div>

@@ -70,7 +70,24 @@ def get_camera():
 from deep_sort_realtime.deepsort_tracker import DeepSort
 
 # Initialize DeepSORT Tracker
-tracker = DeepSort(max_age=30)
+# max_age: keep track of objects for 30 frames if they disappear
+# n_init=5: Object must be detected in 5 consecutive frames to be confirmed (Reduces False Positives)
+tracker = DeepSort(max_age=30, n_init=5)
+
+# Incident Logging
+from datetime import datetime
+import uuid
+
+incident_history = []
+active_accident_ids = set()
+
+@app.get("/status")
+def get_status():
+    # Clean up stale active IDs if tracks are gone (simplified)
+    return {
+        "active_count": len(active_accident_ids),
+        "history": sorted(incident_history, key=lambda x: x['timestamp'], reverse=True)[:10] # send last 10
+    }
 
 def generate_frames():
     cam = get_camera()
@@ -91,27 +108,23 @@ def generate_frames():
             time.sleep(1)
             continue
         
-        # Resize to smaller resolution for speed (480x270 is 1/2 of 960x540)
-        # 640x360 -> 480x270 is ~45% less pixels
+        # Resize for performance and consistency
         frame = cv2.resize(frame, (480, 270))
 
-        # Skip frames to improve FPS
-        # Only create detections every 3 frames
-        # (For a smoother view, we might just display the raw frame in between, 
-        # but DeepSORT needs detections to update. Making it run every frame is heavy).
-        # Optimization: We will run inference every frame but on the small image.
-        
         detections = []
+        ALERT_THRESHOLD = 0.40 # Define globally for the frame logic
 
         # --- 1. Detect Accidents ---
         if model_accident:
-            results_acc = model_accident(frame, verbose=False, conf=0.15)
+            # High Sensitivity (0.10) to catch everything
+            results_acc = model_accident(frame, verbose=False, conf=0.10)
             for result in results_acc:
                 for box in result.boxes:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     w = x2 - x1
                     h = y2 - y1
                     conf = float(box.conf[0])
+                    # Force label to "Accident" for this model
                     detections.append(([x1, y1, w, h], conf, "Accident"))
 
         # --- 2. Detect Objects (People, Bikes, Animals) ---
@@ -127,10 +140,12 @@ def generate_frames():
                         conf = float(box.conf[0])
                         label = result.names[cls]
                         detections.append(([x1, y1, w, h], conf, label.capitalize()))
-
         
         # --- 3. Update Tracker (DeepSORT) ---
         tracks = tracker.update_tracks(detections, frame=frame)
+        
+        # Reset active set for this frame (to track what's currently on screen)
+        current_frame_accident_ids = set()
 
         # --- 4. Draw Tracks ---
         for track in tracks:
@@ -143,6 +158,59 @@ def generate_frames():
             
             label = track.get_det_class() or "Object"
             
+            # Incident Logic
+            if label == "Accident":
+                current_frame_accident_ids.add(track_id)
+                # If this is a new confirmed accident (not in our history yet, roughly)
+                # We check if we logged this track_id recently?
+                # For simplicity, we check if it's already in the global active set or history
+                # But DeepSORT IDs persist. So we just check if it's in our known list.
+                exists = any(inc['id'] == str(track_id) for inc in incident_history)
+                
+                # Retrieve the confidence from the track if available
+                track_conf = getattr(track, 'det_conf', 0.0)
+                if track_conf is None: track_conf = 0.0
+
+                if not exists:
+                    # Log locally regardless (for debug)
+                    timestamp = datetime.now().strftime("%H:%M:%S")
+                    new_inc = {
+                        "id": str(track_id),
+                        "type": "Accident",
+                        "timestamp": timestamp,
+                        "location": "Main Cam 01",
+                        "status": "Pending"
+                    }
+                    incident_history.append(new_inc)
+                    
+                    # ALERT LIMIT: Only Alert if Confidence > 40%
+                    # This filters out weak detections (0.1 - 0.39) from triggering the ambulance
+                    ALERT_THRESHOLD = 0.40
+                    
+                    if track_conf >= ALERT_THRESHOLD:
+                        # PERSISTENCE: Send to Backend
+                        try:
+                            import requests
+                            payload = {
+                                "type": "Accident",
+                                "severity": "Critical",
+                                "location": "Main Cam 01"
+                            }
+                            # Run in thread to not block video stream
+                            threading.Thread(target=requests.post, args=("http://localhost:3000/api/incidents",), kwargs={"json": payload}).start()
+                            print(f"🚨 ALARM! Incident {track_id} (Conf: {track_conf:.2f}) -> Database & Ambulance")
+                        except Exception as e:
+                            print(f"Failed to save incident: {e}")
+                    else:
+                        print(f"⚠️ Incident {track_id} detected but ignored (Conf {track_conf:.2f} < {ALERT_THRESHOLD})")
+            
+            # VISUAL FILTER:
+            # If it's an Accident but confidence is low, SKIP DRAWING
+            # Use the same ALERT_THRESHOLD for visual filtering
+            conf_val = getattr(track, 'det_conf', None)
+            if label == 'Accident' and (conf_val is None or conf_val < ALERT_THRESHOLD):
+                continue # Don't draw weak accidents
+
             # Color coding
             if label == "Accident":
                 color = (0, 0, 255) # Red
@@ -155,11 +223,14 @@ def generate_frames():
             text = f"ID:{track_id} {label}"
             
             # Try to get confidence from the track
-            conf_val = getattr(track, 'det_conf', None)
             if conf_val is not None and isinstance(conf_val, float):
                 text += f" {int(conf_val*100)}%"
 
             cv2.putText(frame, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        
+        # Update global active set
+        global active_accident_ids
+        active_accident_ids = current_frame_accident_ids
 
         # Encode to JPEG
         ret, buffer = cv2.imencode('.jpg', frame)

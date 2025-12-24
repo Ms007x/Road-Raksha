@@ -1,26 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const mockIncidents = [
-    { id: 'INC-001', location: 'Main St & 4th Ave', severity: 'Critical', status: 'Dispatched', time: '10:45 AM' },
-    { id: 'INC-002', location: 'Highway 8 Exit', severity: 'Minor', status: 'Pending', time: '10:40 AM' },
-    { id: 'INC-003', location: 'Park Ave & Elm St', severity: 'Critical', status: 'Dispatched', time: '10:30 AM' },
-    { id: 'INC-004', location: 'Route 50 near Exit 2', severity: 'Minor', status: 'Closed', time: '10:15 AM' },
-    { id: 'INC-005', location: 'Route 50 near Exit 2', severity: 'Minor', status: 'Closed', time: '10:15 AM' },
-    { id: 'INC-006', location: 'Route 50 near Exit 2', severity: 'Minor', status: 'Closed', time: '10:15 AM' },
-    { id: 'INC-007', location: 'Park Ave & Elm St', severity: 'Critical', status: 'Dispatched', time: '10:30 AM' },
-    { id: 'INC-008', location: 'Park Ave & Elm St', severity: 'Minor', status: 'Dispatched', time: '10:30 AM' },
-    { id: 'INC-009', location: 'Park Ave & Elm St', severity: 'Critical', status: 'Dispatched', time: '10:30 AM' },
-];
-
 const IncidentsPage = () => {
+    const [incidents, setIncidents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [severityFilter, setSeverityFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
 
-    const filteredIncidents = mockIncidents.filter(incident => {
+    // Fetch Incidents from Backend API (Persistent)
+    useEffect(() => {
+        const fetchIncidents = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/incidents');
+                if (res.ok) {
+                    const response = await res.json();
+                    if (response.success) {
+                        // Map Database data to UI format
+                        const mapped = response.data.map(inc => ({
+                            id: `INC-${inc.id}`,
+                            location: inc.location,
+                            severity: inc.severity,
+                            status: inc.status,
+                            time: inc.timestamp
+                        }));
+                        setIncidents(mapped);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch incidents:", err);
+            }
+        };
+
+        fetchIncidents();
+        // Poll every 2s
+        const interval = setInterval(fetchIncidents, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const filteredIncidents = incidents.filter(incident => {
         const matchesSearch = incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
             incident.id.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesSeverity = severityFilter === 'All' || incident.severity === severityFilter;

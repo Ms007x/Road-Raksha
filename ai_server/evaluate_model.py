@@ -26,14 +26,14 @@ except Exception as e:
 all_images = glob.glob(os.path.join(IMAGE_DIR, "*.jpg")) + \
              glob.glob(os.path.join(IMAGE_DIR, "*.JPG"))
 
-print(f"Testing on {len(all_images)} recovered random images with conf=0.15...\n")
+print(f"Testing on {len(all_images)} recovered random images with conf=0.10...\n")
 
 detections_count = 0
 
 for img_path in all_images:
     filename = os.path.basename(img_path)
     # Run with production confidence threshold
-    res = model(img_path, verbose=False, conf=0.15)[0]
+    res = model(img_path, verbose=False, conf=0.10)[0]
     
     boxes = res.boxes
     if len(boxes) > 0:
