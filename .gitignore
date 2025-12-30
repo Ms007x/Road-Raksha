@@ -3,4 +3,17 @@ node_modules
 node_modules
     dist    
 
-    
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+*.pt
+*.pth
+
+# Model Weights
+**/weights/
+ai_server/road_raksha_finetune/
