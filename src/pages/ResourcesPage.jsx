@@ -11,11 +11,7 @@ const cctvs = [
     { id: 'CAM-04', location: 'School Zone A', status: 'Active', type: 'Safety Cam', alerts: 0 },
 ];
 
-const hospitals = [
-    { id: 'HOS-01', name: 'City General Hospital', location: 'Sector 4', beds: '12/50', trauma: 'Level 1', status: 'Open' },
-    { id: 'HOS-02', name: 'MediCare Trauma Center', location: 'Highway 8', beds: '4/20', trauma: 'Level 2', status: 'Busy' },
-    { id: 'HOS-03', name: 'Apollo Emergency', location: 'Downtown', beds: '18/30', trauma: 'Level 1', status: 'Open' },
-];
+
 
 const ResourceCard = ({ resource, type }) => {
     let Icon = Activity;
@@ -44,7 +40,7 @@ const ResourceCard = ({ resource, type }) => {
             </div>
 
             <h3 className="text-xl font-bold text-white mb-1">
-                {type === 'AMBULANCE' ? resource.id : (type === 'HOSPITAL' ? resource.name : resource.id)}
+                {type === 'AMBULANCE' ? resource.service_name : (type === 'HOSPITAL' ? resource.name : resource.id)}
             </h3>
             <p className="text-sm text-slate-400 mb-4">
                 {type === 'AMBULANCE' ? resource.driverName : (type === 'HOSPITAL' ? 'Emergency Center' : resource.type)}
@@ -90,11 +86,36 @@ const ResourcesPage = () => {
     const [ambulances, setAmbulances] = useState([]);
     const [hospitals, setHospitals] = useState([]);
 
+    const [userLocation, setUserLocation] = useState(null);
+    const [loadingLocation, setLoadingLocation] = useState(true);
+
+    // Get User Location
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                    setLoadingLocation(false);
+                },
+                (error) => {
+                    console.error("Location access denied or failed", error);
+                    setLoadingLocation(false);
+                }
+            );
+        } else {
+            setLoadingLocation(false);
+        }
+    }, []);
+
     // Fetch Ambulances
     useEffect(() => {
         const fetchAmbulances = async () => {
+            if (!userLocation) return;
             try {
-                const res = await fetch('http://localhost:3000/api/ambulances');
+                const res = await fetch(`http://localhost:3000/api/ambulances?lat=${userLocation.lat}&lng=${userLocation.lng}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success) {
@@ -108,13 +129,14 @@ const ResourcesPage = () => {
         fetchAmbulances();
         const interval = setInterval(fetchAmbulances, 3000);
         return () => clearInterval(interval);
-    }, []);
+    }, [userLocation]);
 
     // Fetch Hospitals
     useEffect(() => {
         const fetchHospitals = async () => {
+            if (!userLocation) return;
             try {
-                const res = await fetch('http://localhost:3000/api/hospitals');
+                const res = await fetch(`http://localhost:3000/api/hospitals?lat=${userLocation.lat}&lng=${userLocation.lng}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success) {
@@ -125,10 +147,10 @@ const ResourcesPage = () => {
                 console.error("Failed to fetch hospitals", err);
             }
         };
-        if (activeTab === 'HOSPITALS') {
+        if (activeTab === 'HOSPITALS' && userLocation) {
             fetchHospitals();
         }
-    }, [activeTab]);
+    }, [activeTab, userLocation]);
 
     const tabs = ['CCTV', 'AMBULANCES', 'HOSPITALS'];
 
@@ -162,19 +184,39 @@ const ResourcesPage = () => {
                     </div>
 
                     {/* Content */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {activeTab === 'CCTV' && cctvs.map(res => (
-                            <ResourceCard key={res.id} resource={res} type="CCTV" />
-                        ))}
+                    {/* Content */}
+                    {loadingLocation ? (
+                        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                            <p>Detecting Location...</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {activeTab === 'CCTV' && cctvs.map(res => (
+                                <ResourceCard key={res.id} resource={res} type="CCTV" />
+                            ))}
 
-                        {activeTab === 'AMBULANCES' && ambulances.map(res => (
-                            <ResourceCard key={res.id} resource={res} type="AMBULANCE" />
-                        ))}
+                            {activeTab === 'AMBULANCES' && (
+                                ambulances.length > 0 ? (
+                                    ambulances.map(res => <ResourceCard key={res.id} resource={res} type="AMBULANCE" />)
+                                ) : (
+                                    <div className="col-span-full text-center text-slate-500 py-10">
+                                        No ambulances found nearby. Check Dashboard to scan.
+                                    </div>
+                                )
+                            )}
 
-                        {activeTab === 'HOSPITALS' && hospitals.map(res => (
-                            <ResourceCard key={res.id} resource={res} type="HOSPITAL" />
-                        ))}
-                    </div>
+                            {activeTab === 'HOSPITALS' && (
+                                hospitals.length > 0 ? (
+                                    hospitals.map(res => <ResourceCard key={res.id} resource={res} type="HOSPITAL" />)
+                                ) : (
+                                    <div className="col-span-full text-center text-slate-500 py-10">
+                                        Finding hospitals nearby...
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
 

@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const sqlite3 = require('sqlite3').verbose();
+const { scrapeJustDial } = require('./scraper');
+
 
 const app = express();
 const PORT = 3000;
@@ -20,6 +22,22 @@ const db = new sqlite3.Database('./road_raksha.db', (err) => {
             status TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             hospital TEXT
+        )`);
+
+        // Create Ambulances Table
+        db.run(`CREATE TABLE IF NOT EXISTS ambulances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service_name TEXT,
+            driver_name TEXT,
+            contact_number TEXT,
+            address TEXT,
+            latitude REAL,
+            longitude REAL,
+            current_speed INTEGER,
+            status TEXT, -- 'moving', 'standby', 'on_call'
+            heading REAL,
+            last_updated DATETIME,
+            scrape_session_id TEXT
         )`);
         // Ensure hospital column exists for older DBs
         db.run(`ALTER TABLE incidents ADD COLUMN hospital TEXT`, (err) => {
@@ -41,18 +59,13 @@ const getRandom = (min, max) => Math.random() * (max - min) + min;
 // Helper to get random item from array
 const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// Mock Data Sources
-const driverNames = [
-    "Rahul Singh", "Vikram Malhotra", "Amit Kumar", "Suresh Raina",
-    "Chandu Model", "Anjali Gupta", "Rohan Das", "Karan Johar",
-    "Sneha Reddy", "Arjun Kapoor"
-];
 
-const statuses = ["Available", "En Route", "Busy"];
+
 
 // Base Location (New Delhi)
-const BASE_LAT = 28.6139;
-const BASE_LNG = 77.2090;
+// No Default Location - Client Must Provide
+const BASE_LAT = null;
+const BASE_LNG = null;
 
 // STATEFUL DATA
 let ambulances = [];
@@ -90,10 +103,17 @@ const fetchHospitals = async (centerLat, centerLng, radiusKm = 5) => {
     const response = await axios.get(url);
     const elements = response.data.elements || [];
     return elements.map(el => ({
-        id: el.id,
+        id: el.id.toString(),
         name: el.tags?.name || "Unnamed Hospital",
-        lat: el.lat || el.center?.lat,
-        lng: el.lon || el.center?.lon
+        location: { // UI expects object for coordinates
+            lat: el.lat || el.center?.lat,
+            lng: el.lon || el.center?.lon
+        },
+        // Enriched Fields (Mocked for UI demo as OSM doesn't have live beds)
+        status: Math.random() > 0.3 ? 'Open' : 'Busy',
+        beds: `${Math.floor(Math.random() * 20)}/${Math.floor(Math.random() * 50) + 20}`,
+        type: el.tags?.healthcare || "General Hospital",
+        trauma: "Level 1"
     }));
 };
 // Removed stray top-level async call; fetchRoute now handles its own requests
@@ -101,62 +121,50 @@ const fetchHospitals = async (centerLat, centerLng, radiusKm = 5) => {
 // --- 1. Hospitals Logic ---
 
 
-// Initialize Ambulances with smarter placement
-const initializeAmbulances = async (centerLat, centerLng) => {
-    ambulances = [];
-    console.log(`Initializing Ambulances around ${centerLat}, ${centerLng}`);
-    for (let i = 1; i <= 10; i++) {
-        const id = `AMB${i.toString().padStart(3, '0')}`;
-
-        // 1. Generate random point in 50km radius
-        const randLat = parseFloat(centerLat) + getRandom(-0.45, 0.45);
-        const randLng = parseFloat(centerLng) + getRandom(-0.45, 0.45);
-
-        // 2. Validate "Not in water" by snapping to nearest road via OSRM
-        // We do this by asking for a route from/to the SAME point. OSRM snaps to nearest segment.
-        let startLat = randLat;
-        let startLng = randLng;
-
-        try {
-            // Tiny route just to get snapped coordinate
-            const snapRoute = await fetchRoute(randLat, randLng, randLat + 0.001, randLng + 0.001);
-            if (snapRoute && snapRoute.length > 0) {
-                // Use the first valid road coordinate
-                startLat = snapRoute[0].lat;
-                startLng = snapRoute[0].lng;
+// Initialize Ambulances (Load from DB or Mock)
+const initializeAmbulances = (centerLat, centerLng) => {
+    return new Promise((resolve, reject) => {
+        // 1. Try to load key from DB
+        db.all("SELECT * FROM ambulances", [], (err, rows) => {
+            if (err) {
+                console.error("DB Error:", err);
+                return resolve(); // Resolve anyway to avoid hanging
             }
-        } catch (e) {
-            console.log("Snap failed, using random");
-        }
 
-        const amb = {
-            id: id,
-            driverName: driverNames[i - 1],
-            status: getRandomItem(statuses),
-            // Start either moving or halted
-            speed: Math.random() > 0.3 ? Math.floor(getRandom(30, 80)) : 0,
-            location: { lat: startLat, lng: startLng },
-            lastUpdated: new Date().toISOString(),
-            route: [],
-            routeIndex: 0,
-            destination: null,
-            isHalted: false,
-            haltTimer: 0 // frames until un-halt
-        };
+            if (rows && rows.length > 0) {
+                console.log(`Loaded ${rows.length} ambulances from DB.`);
+                ambulances = rows.map(row => ({
+                    id: row.id.toString(),
+                    service_name: row.service_name,
+                    driverName: row.driver_name,
+                    contact_number: row.contact_number,
+                    address: row.address,
+                    location: { lat: row.latitude, lng: row.longitude },
+                    speed: row.current_speed,
+                    status: row.status || 'moving',
+                    heading: row.heading || 0,
+                    lastUpdated: row.last_updated,
+                    // Simulation State
+                    route: [],
+                    routeIndex: 0,
+                    destination: null,
+                    isHalted: row.status === 'standby',
+                    haltTimer: 0
+                }));
 
-        if (amb.speed === 0) {
-            amb.isHalted = true;
-            amb.status = "Available"; // Halted usually means waiting
-            amb.haltTimer = Math.floor(getRandom(50, 200)); // Wait for 50-200 ticks
-        }
-
-        ambulances.push(amb);
-
-        // Assign initial route only if moving
-        if (!amb.isHalted) {
-            assignNewRoute(amb, startLat, startLng);
-        }
-    }
+                // Restart routes for moving ones
+                ambulances.forEach(amb => {
+                    if (amb.status !== 'standby') {
+                        assignNewRoute(amb, amb.location.lat, amb.location.lng);
+                    }
+                });
+            } else {
+                console.log("DB Empty. Waiting for Client to Scrape...");
+                ambulances = [];
+            }
+            resolve();
+        });
+    });
 };
 
 const assignNewRoute = async (amb, centerLat, centerLng) => {
@@ -179,30 +187,23 @@ const updateAmbulances = () => {
     const deltaTime = Math.min((now - lastUpdate) / 1000, 2.0);
 
     ambulances.forEach(async (amb) => {
-        // --- Random Speed & Halt Logic ---
-        // 10% chance to change speed behavior per tick if not busy
-        if (amb.status !== 'Busy' && Math.random() < 0.1) {
-            if (amb.isHalted) {
-                // Maybe start moving?
-                if (amb.haltTimer > 0) {
-                    amb.haltTimer--;
-                } else {
-                    // Start moving
-                    amb.isHalted = false;
-                    amb.speed = Math.floor(getRandom(30, 80));
-                    assignNewRoute(amb, amb.location.lat, amb.location.lng);
-                }
-            } else {
-                // Maybe stop? (5% chance)
-                if (Math.random() < 0.05) {
-                    amb.isHalted = true;
-                    amb.speed = 0;
-                    amb.haltTimer = Math.floor(getRandom(50, 200));
-                } else {
-                    // Just change speed
-                    amb.speed = Math.floor(getRandom(30, 80));
-                }
-            }
+        // --- Status State Machine ---
+        // Standby (Green) <-> Moving (Blue) <-> On Call (Red, triggered by incident)
+
+        // Random transition for simulation: Standby -> Moving (1% chance)
+        if (amb.status === 'standby' && Math.random() < 0.005) {
+            amb.status = 'moving';
+            amb.isHalted = false;
+            amb.speed = Math.floor(getRandom(20, 60));
+            assignNewRoute(amb, amb.location.lat, amb.location.lng);
+        }
+
+        // Moving -> Standby (0.5% chance)
+        if (amb.status === 'moving' && Math.random() < 0.005) {
+            amb.status = 'standby';
+            amb.isHalted = true;
+            amb.speed = 0;
+            amb.route = [];
         }
 
         if (amb.isHalted || amb.speed === 0 || !amb.route || amb.route.length === 0) return;
@@ -217,6 +218,10 @@ const updateAmbulances = () => {
             const dLat = nextPoint.lat - currPoint.lat;
             const dLng = nextPoint.lng - currPoint.lng;
             const distToNext = Math.sqrt(dLat * dLat + dLng * dLng) * 111000;
+
+            // Calc Heading
+            const angle = Math.atan2(dLng, dLat) * 180 / Math.PI;
+            amb.heading = angle;
 
             if (distToMove >= distToNext) {
                 amb.location = nextPoint;
@@ -233,6 +238,23 @@ const updateAmbulances = () => {
         amb.lastUpdated = new Date().toISOString();
     });
 
+    // Valid DB persistence: Update every 5 seconds (approx 1 in 3 calls if interval is 2s)
+    // Or just simple check:
+    if (Math.random() < 0.3) {
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
+            const stmt = db.prepare("UPDATE ambulances SET latitude = ?, longitude = ?, current_speed = ?, status = ?, heading = ?, last_updated = ? WHERE id = ?");
+            ambulances.forEach(amb => {
+                // If ID is numeric (from DB) use it, else skip
+                if (parseInt(amb.id)) {
+                    stmt.run(amb.location.lat, amb.location.lng, amb.speed, amb.status, amb.heading, amb.lastUpdated, amb.id);
+                }
+            });
+            stmt.finalize();
+            db.run("COMMIT");
+        });
+    }
+
     lastUpdate = now;
 };
 
@@ -245,9 +267,13 @@ initializeAmbulances(BASE_LAT, BASE_LNG);
 
 // NEW: Get Hospitals (fetch from Overpass API)
 app.get('/api/hospitals', async (req, res) => {
-    const lat = parseFloat(req.query.lat) || BASE_LAT;
-    const lng = parseFloat(req.query.lng) || BASE_LNG;
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
     const radius = parseFloat(req.query.radius) || 5; // km
+
+    if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ success: false, error: "Missing lat/lng parameters" });
+    }
     try {
         const data = await fetchHospitals(lat, lng, radius);
         res.json({ success: true, count: data.length, data });
@@ -257,13 +283,121 @@ app.get('/api/hospitals', async (req, res) => {
     }
 });
 
+// NEW: Trigger Scrape
+app.post('/api/scrape', async (req, res) => {
+    const { lat, lng } = req.body;
+
+    const searchLat = lat;
+    const searchLng = lng;
+
+    if (!searchLat || !searchLng) {
+        return res.status(400).json({ success: false, error: "Missing lat/lng for scraping" });
+    }
+
+    try {
+        console.log(`Starting Scrape for ${searchLat}, ${searchLng}...`);
+
+        // 1. Scrape Data
+        const { city, ambulances: scrapedData } = await scrapeJustDial(searchLat, searchLng);
+
+        if (!scrapedData || scrapedData.length === 0) {
+            return res.json({ success: false, message: "No ambulances found during scrape." });
+        }
+
+        // 2. Clear Old Data (optional: or just clear for this city?)
+        // For this project, we replace the fleet.
+        await new Promise((resolve) => db.run("DELETE FROM ambulances", resolve));
+
+        // 3. Insert New Data
+        const stmt = db.prepare(`INSERT INTO ambulances (
+            service_name, driver_name, contact_number, address,
+            latitude, longitude, current_speed, status, heading, last_updated
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+        // Generate Random Initial Positions around the City Center
+        // We use the searchLat/Lng as the center
+        ambulances = []; // Clear in-memory array
+
+        const now = new Date().toISOString();
+
+        scrapedData.forEach(amb => {
+            // Random Pos within ~10km (0.1 deg)
+            const rLat = parseFloat(searchLat) + (Math.random() - 0.5) * 0.15;
+            const rLng = parseFloat(searchLng) + (Math.random() - 0.5) * 0.15;
+
+            // Random Status
+            const rand = Math.random();
+            let status = 'moving';
+            let speed = Math.floor(Math.random() * 40) + 20; // 20-60
+            if (rand < 0.3) {
+                status = 'standby';
+                speed = 0;
+            } else if (rand > 0.9) {
+                status = 'on_call';
+                speed = 60 + Math.floor(Math.random() * 20); // 60-80
+            }
+
+            const heading = Math.floor(Math.random() * 360);
+
+            // Add to DB
+            stmt.run(
+                amb.service_name,
+                amb.driver_name || "Unknown Driver",
+                amb.contact_number,
+                amb.address,
+                rLat,
+                rLng,
+                speed,
+                status,
+                heading,
+                now
+            );
+
+            // Add to In-Memory (for simulation loop)
+            ambulances.push({
+                id: `AMB-${Math.floor(Math.random() * 10000)}`, // Temp ID until we reload from DB or just use this
+                // We should really reload from DB to get the real IDs, but for speed we construct:
+                service_name: amb.service_name,
+                driverName: amb.driver_name || "Unknown Driver", // mapping to old prop name 'driverName' for frontend compatibility?
+                // Frontend expects: id, driverName, status, speed, location, etc.
+                // We need to map the new schema to the old object structure if we want to preserve frontend compat perfectly.
+                // Or update frontend.
+                // Let's map it:
+                driverName: amb.driver_name || "Unknown Driver",
+                contact_number: amb.contact_number,
+                status: status,
+                speed: speed,
+                location: { lat: rLat, lng: rLng },
+                heading: heading,
+                destination: null,
+                route: [],
+                routeIndex: 0,
+                isHalted: status === 'standby'
+            });
+        });
+
+        stmt.finalize();
+
+        res.json({ success: true, count: scrapedData.length, city, message: `Scraped ${scrapedData.length} ambulances` });
+
+    } catch (e) {
+        console.error("Scrape Error:", e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // 1. Get Ambulances (Existing)
-app.get('/api/ambulances', (req, res) => {
+app.get('/api/ambulances', async (req, res) => {
     // ... same logic ...
     const { lat, lng } = req.query;
 
-    const centerLat = parseFloat(lat) || BASE_LAT;
-    const centerLng = parseFloat(lng) || BASE_LNG;
+    const centerLat = parseFloat(lat);
+    const centerLng = parseFloat(lng);
+
+    // Require Location
+    if (isNaN(centerLat) || isNaN(centerLng)) {
+        return res.status(400).json({ success: false, error: "Location required" });
+    }
 
     // Check if we need to re-initialize (if empty OR if requested location is far from current cluster)
     let shouldReinit = ambulances.length === 0;
@@ -285,7 +419,7 @@ app.get('/api/ambulances', (req, res) => {
     if (shouldReinit) {
         // Respawn BOTH Ambulances and Hospitals at new location
         console.log(`Spawning World at ${centerLat}, ${centerLng}`);
-        initializeAmbulances(centerLat, centerLng);
+        await initializeAmbulances(centerLat, centerLng);
         // initializeHospitals(centerLat, centerLng); // Removed
     }
 
