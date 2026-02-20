@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Road Raksha - Stop All Services
+# Kills all processes and servers required for the project
+
+echo "🛑 Stopping Road Raksha Services..."
+echo "=================================="
+
+# Kill Node.js backend server (port 3000)
+echo "📡 Stopping Backend Server (port 3000)..."
+lsof -ti:3000 | xargs kill -9 2>/dev/null && echo "   ✅ Backend server stopped" || echo "   ℹ️  No backend server running"
+
+# Kill Vite dev server (port 5173)
+echo "⚛️  Stopping Frontend Server (port 5173)..."
+lsof -ti:5173 | xargs kill -9 2>/dev/null && echo "   ✅ Frontend server stopped" || echo "   ℹ️  No frontend server running"
+
+# Kill Python AI server (port 8000)
+echo "🤖 Stopping AI Server (port 8000)..."
+lsof -ti:8000 | xargs kill -9 2>/dev/null && echo "   ✅ AI server stopped" || echo "   ℹ️  No AI server running"
+
+# Kill any remaining node processes related to the project
+echo "🔍 Cleaning up remaining processes..."
+pkill -f "node.*server/index.js" 2>/dev/null && echo "   ✅ Node backend processes killed" || echo "   ℹ️  No node backend processes"
+pkill -f "vite" 2>/dev/null && echo "   ✅ Vite processes killed" || echo "   ℹ️  No vite processes"
+pkill -f "python.*main.py" 2>/dev/null && echo "   ✅ Python AI processes killed" || echo "   ℹ️  No python AI processes"
+
+echo ""
+echo "=================================="
+echo "✅ All Road Raksha services stopped!"
+echo ""
+echo "To restart, run: ./rr-start"

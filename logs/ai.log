@@ -1,0 +1,79 @@
+/Users/madhavsamalla/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+🌍 Detecting AI Server location...
+✅ AI Location Set: Hyderabad (17.384, 78.4564)
+Loading accident model from ../MOdel/best.mlpackage...
+Accident Model loaded successfully!
+Loading objects model from yolov8n.mlpackage...
+WARNING ⚠️ Unable to automatically guess model task, assuming 'task=detect'. Explicitly define task for your model, i.e. 'task=detect', 'segment', 'classify','pose' or 'obb'.
+/Users/madhavsamalla/Desktop/Road-Raksha/ai_server/main.py:283: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/Users/madhavsamalla/Desktop/Road-Raksha/ai_server/main.py:287: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+Objects Model loaded successfully!
+INFO:     Started server process [65685]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🚀 Background Processor Started
+🎥 Opening camera (ID 0)...
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+2026-02-20 23:05:13.930 Python[65685:5810143] WARNING: AVCaptureDeviceTypeExternal is deprecated for Continuity Cameras. Please use AVCaptureDeviceTypeContinuityCamera and add NSCameraUseContinuityCameraDeviceType to your Info.plist.
+✅ Camera opened successfully!
+Loading ../MOdel/best.mlpackage for CoreML inference...
+Torch version 2.8.0 has not been tested with coremltools. You may run into unexpected errors. Torch 2.7.0 is the most recent version that has been tested.
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+Loading yolov8n.mlpackage for CoreML inference...
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK

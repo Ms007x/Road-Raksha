@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo "🛑 Stopping AI Server..."
+
+# Kill process on port 8000
+if lsof -ti:8000 > /dev/null 2>&1; then
+    echo "   Killing process on port 8000..."
+    lsof -ti:8000 | xargs kill -9 2>/dev/null
+fi
+
+# Kill any python process running main.py in ai_server
+pkill -f "python.*main.py" 2>/dev/null
+
+echo "✅ AI Server stopped."

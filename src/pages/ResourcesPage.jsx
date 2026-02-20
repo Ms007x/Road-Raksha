@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Truck, Phone, Battery, MapPin, Shield, Activity, Camera, Video, Building2, Stethoscope, Navigation } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import CCTVGrid from '../components/CCTVGrid';
 
 // Mock Data for Non-Ambulance Resources
 const cctvs = [
@@ -9,6 +10,8 @@ const cctvs = [
     { id: 'CAM-02', location: 'Highway 8 South', status: 'Active', type: 'Speed Cam', alerts: 2 },
     { id: 'CAM-03', location: 'Market Road', status: 'Offline', type: 'Surveillance', alerts: 0 },
     { id: 'CAM-04', location: 'School Zone A', status: 'Active', type: 'Safety Cam', alerts: 0 },
+    { id: 'CAM-05', location: 'City Entrance North', status: 'Active', type: 'License Plate Reader', alerts: 1 },
+    { id: 'CAM-06', location: 'Public Square', status: 'Active', type: 'Crowd Monitoring', alerts: 5 },
 ];
 
 
@@ -191,30 +194,32 @@ const ResourcesPage = () => {
                             <p>Detecting Location...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {activeTab === 'CCTV' && cctvs.map(res => (
-                                <ResourceCard key={res.id} resource={res} type="CCTV" />
-                            ))}
-
-                            {activeTab === 'AMBULANCES' && (
-                                ambulances.length > 0 ? (
-                                    ambulances.map(res => <ResourceCard key={res.id} resource={res} type="AMBULANCE" />)
-                                ) : (
-                                    <div className="col-span-full text-center text-slate-500 py-10">
-                                        No ambulances found nearby. Check Dashboard to scan.
-                                    </div>
-                                )
+                        <div>
+                            {activeTab === 'CCTV' && (
+                                <CCTVGrid cameras={cctvs} />
                             )}
 
-                            {activeTab === 'HOSPITALS' && (
-                                hospitals.length > 0 ? (
-                                    hospitals.map(res => <ResourceCard key={res.id} resource={res} type="HOSPITAL" />)
-                                ) : (
-                                    <div className="col-span-full text-center text-slate-500 py-10">
-                                        Finding hospitals nearby...
-                                    </div>
-                                )
-                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {activeTab === 'AMBULANCES' && (
+                                    ambulances.length > 0 ? (
+                                        ambulances.map(res => <ResourceCard key={res.id} resource={res} type="AMBULANCE" />)
+                                    ) : (
+                                        <div className="col-span-full text-center text-slate-500 py-10">
+                                            No ambulances found nearby. System updating...
+                                        </div>
+                                    )
+                                )}
+
+                                {activeTab === 'HOSPITALS' && (
+                                    hospitals.length > 0 ? (
+                                        hospitals.map(res => <ResourceCard key={res.id} resource={res} type="HOSPITAL" />)
+                                    ) : (
+                                        <div className="col-span-full text-center text-slate-500 py-10">
+                                            Finding hospitals nearby...
+                                        </div>
+                                    )
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

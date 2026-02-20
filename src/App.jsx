@@ -6,16 +6,20 @@ import IncidentsPage from './pages/IncidentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SettingsPage from './pages/SettingsPage';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return localStorage.getItem('auth') === 'true';
+    });
 
-    // Check for existing session (mock)
     useEffect(() => {
-        const auth = localStorage.getItem('auth');
-        if (auth === 'true') {
-            setIsAuthenticated(true);
-        }
+        // Sync state if localStorage changes externally (optional but good practice)
+        const handleStorageChange = () => {
+            setIsAuthenticated(localStorage.getItem('auth') === 'true');
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     const handleLogin = () => {
@@ -71,6 +75,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <SettingsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin"
+                    element={
+                        <ProtectedRoute>
+                            <AdminPanel />
                         </ProtectedRoute>
                     }
                 />

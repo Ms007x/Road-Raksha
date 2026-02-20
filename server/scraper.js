@@ -44,10 +44,10 @@ const getCityFromCoordinates = async (lat, lng) => {
         });
 
         const address = response.data.address;
-        return address.city || address.town || address.village || address.county || "Delhi";
+        return address.city || address.town || address.village || address.county || null;
     } catch (error) {
         console.error("Reverse geocoding failed:", error.message);
-        return "Delhi"; // Fallback
+        return null; // Fallback
     }
 };
 

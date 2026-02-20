@@ -1,0 +1,209 @@
+#!/bin/bash
+
+# Road Raksha Management Script
+# Created by Antigravity AI
+# Usage: ./rr {start|stop|restart|status} [service]
+# Services: backend, frontend, ai, all (default)
+
+# Colors for better output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
+
+# Ports
+BACKEND_PORT=3000
+FRONTEND_PORT=5173
+AI_PORT=8000
+LOG_DIR="./logs"
+
+# Ensure log directory exists
+mkdir -p "$LOG_DIR"
+
+# Get Absolute Path of Project Root
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+check_port() {
+    lsof -ti:$1 > /dev/null 2>&1
+}
+
+# --- Backend ---
+start_backend() {
+    echo -e "${BLUE}📡 Starting Backend Server...${NC}"
+    if check_port $BACKEND_PORT; then
+        echo -e "   ${YELLOW}⚠️  Backend already running on port $BACKEND_PORT${NC}"
+    else
+        cd "$ROOT_DIR/server" && node index.js > "$ROOT_DIR/$LOG_DIR/backend.log" 2>&1 &
+        sleep 2
+        if check_port $BACKEND_PORT; then
+            echo -e "   ${GREEN}✅ Backend server started (PID: $(lsof -ti:$BACKEND_PORT))${NC}"
+        else
+            echo -e "   ${RED}❌ Failed to start backend server. Check $LOG_DIR/backend.log${NC}"
+        fi
+    fi
+}
+
+stop_backend() {
+    echo -e "${RED}📡 Stopping Backend Server...${NC}"
+    if check_port $BACKEND_PORT; then
+        lsof -ti:$BACKEND_PORT | xargs kill -9 2>/dev/null
+        pkill -f "node.*server/index.js" 2>/dev/null
+        echo -e "   ${GREEN}✅ Backend server stopped${NC}"
+    else
+        echo -e "   ${YELLOW}ℹ️  No backend server running on port $BACKEND_PORT${NC}"
+    fi
+}
+
+# --- Frontend ---
+start_frontend() {
+    echo -e "${BLUE}⚛️  Starting Frontend Server...${NC}"
+    if check_port $FRONTEND_PORT; then
+        echo -e "   ${YELLOW}⚠️  Frontend already running on port $FRONTEND_PORT${NC}"
+    else
+        cd "$ROOT_DIR" && npm run dev > "$LOG_DIR/frontend.log" 2>&1 &
+        sleep 3
+        if check_port $FRONTEND_PORT; then
+            echo -e "   ${GREEN}✅ Frontend server started (PID: $(lsof -ti:$FRONTEND_PORT))${NC}"
+        else
+            echo -e "   ${RED}❌ Failed to start frontend server. Check $LOG_DIR/frontend.log${NC}"
+        fi
+    fi
+}
+
+stop_frontend() {
+    echo -e "${RED}⚛️  Stopping Frontend Server...${NC}"
+    if check_port $FRONTEND_PORT; then
+        lsof -ti:$FRONTEND_PORT | xargs kill -9 2>/dev/null
+        pkill -f "vite" 2>/dev/null
+        echo -e "   ${GREEN}✅ Frontend server stopped${NC}"
+    else
+        echo -e "   ${YELLOW}ℹ️  No frontend server running on port $FRONTEND_PORT${NC}"
+    fi
+}
+
+# --- AI ---
+start_ai() {
+    echo -e "${BLUE}🤖 Starting AI Server...${NC}"
+    if check_port $AI_PORT; then
+        echo -e "   ${YELLOW}⚠️  AI server already running on port $AI_PORT${NC}"
+    else
+        # Determine Python binary
+        # Try local venv first, but only if it has fastapi installed
+        if [ -f "$ROOT_DIR/.venv/bin/python3" ] && "$ROOT_DIR/.venv/bin/python3" -c "import fastapi" >/dev/null 2>&1; then
+            PYTHON_BIN="$ROOT_DIR/.venv/bin/python3"
+        elif [ -f "$ROOT_DIR/.venv/bin/python" ] && "$ROOT_DIR/.venv/bin/python" -c "import fastapi" >/dev/null 2>&1; then
+            PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
+        else
+            # Fallback to system python3
+            PYTHON_BIN="python3"
+        fi
+        
+        echo -e "   ${CYAN}Using Python: $PYTHON_BIN${NC}"
+        # Check if the chosen python has fastapi
+        if ! $PYTHON_BIN -c "import fastapi" >/dev/null 2>&1; then
+            echo -e "   ${RED}❌ Error: 'fastapi' not found in $PYTHON_BIN. Please run: pip install -r ai_server/requirements.txt${NC}"
+            return 1
+        fi
+        cd "$ROOT_DIR/ai_server" && $PYTHON_BIN main.py > "$ROOT_DIR/$LOG_DIR/ai.log" 2>&1 &
+        sleep 3
+        if check_port $AI_PORT; then
+            echo -e "   ${GREEN}✅ AI server started (PID: $(lsof -ti:$AI_PORT))${NC}"
+        else
+            echo -e "   ${RED}❌ Failed to start AI server. Check $LOG_DIR/ai.log${NC}"
+        fi
+    fi
+}
+
+stop_ai() {
+    echo -e "${RED}🤖 Stopping AI Server...${NC}"
+    if check_port $AI_PORT; then
+        lsof -ti:$AI_PORT | xargs kill -9 2>/dev/null
+        pkill -f "python.*main.py" 2>/dev/null
+        echo -e "   ${GREEN}✅ AI server stopped${NC}"
+    else
+        echo -e "   ${YELLOW}ℹ️  No AI server running on port $AI_PORT${NC}"
+    fi
+}
+
+status() {
+    echo -e "\n${BOLD}📊 Road Raksha Service Status${NC}"
+    echo -e "===================================="
+    
+    if check_port $BACKEND_PORT; then
+        echo -e "   Backend:  ${GREEN}RUNNING${NC} (Port: $BACKEND_PORT, URL: http://localhost:$BACKEND_PORT)"
+    else
+        echo -e "   Backend:  ${RED}STOPPED${NC}"
+    fi
+    
+    if check_port $FRONTEND_PORT; then
+        echo -e "   Frontend: ${GREEN}RUNNING${NC} (Port: $FRONTEND_PORT, URL: http://localhost:$FRONTEND_PORT)"
+    else
+        echo -e "   Frontend: ${RED}STOPPED${NC}"
+    fi
+    
+    if check_port $AI_PORT; then
+        echo -e "   AI:       ${GREEN}RUNNING${NC} (Port: $AI_PORT, URL: http://localhost:$AI_PORT)"
+    else
+        echo -e "   AI:       ${RED}STOPPED${NC}"
+    fi
+    echo -e "====================================\n"
+}
+
+usage() {
+    echo -e "${CYAN}Road Raksha Management Tool${NC}"
+    echo -e ""
+    echo -e "Usage: ./rr {start|stop|restart|status} [service]"
+    echo -e ""
+    echo -e "Services:"
+    echo -e "  all      - All services (Backend, Frontend, AI)"
+    echo -e "  backend  - Node.js API server (Port: $BACKEND_PORT)"
+    echo -e "  frontend - Vite dev server (Port: $FRONTEND_PORT)"
+    echo -e "  ai       - Python AI server (Port: $AI_PORT)"
+    echo -e ""
+    echo -e "Examples:"
+    echo -e "  ./rr start         - Start all services"
+    echo -e "  ./rr stop ai       - Stop only the AI server"
+    echo -e "  ./rr restart all   - Restart everything"
+    echo -e "  ./rr status        - Check status of all services"
+    exit 1
+}
+
+# --- Main Logic ---
+
+COMMAND=$1
+SERVICE=${2:-all}
+
+case "$COMMAND" in
+    start)
+        case "$SERVICE" in
+            backend)  start_backend ;;
+            frontend) start_frontend ;;
+            ai)       start_ai ;;
+            all)      start_backend; start_frontend; start_ai; status ;;
+            *)        usage ;;
+        esac
+        ;;
+    stop)
+        case "$SERVICE" in
+            backend)  stop_backend ;;
+            frontend) stop_frontend ;;
+            ai)       stop_ai ;;
+            all)      stop_backend; stop_frontend; stop_ai ;;
+            *)        usage ;;
+        esac
+        ;;
+    restart)
+        $0 stop "$SERVICE"
+        sleep 2
+        $0 start "$SERVICE"
+        ;;
+    status)
+        status
+        ;;
+    *)
+        usage
+        ;;
+esac

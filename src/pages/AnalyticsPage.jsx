@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, PieChart, Pie, Cell, Legend
+    PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { Activity, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
-// Static Data for "Response Time" (Since we don't track ambulances deeply yet)
-const responseTimeData = [
-    { zone: 'North', time: 12 },
-    { zone: 'South', time: 8 },
-    { zone: 'East', time: 15 },
-    { zone: 'West', time: 10 },
-    { zone: 'Central', time: 6 },
-];
 
 const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
     <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 flex items-start justify-between hover:bg-panel/70 transition-colors">
@@ -83,27 +74,6 @@ const AnalyticsPage = () => {
                             icon={Activity}
                             color="primary"
                         />
-                        <StatCard
-                            title="Avg Response Time"
-                            value="8m 42s"
-                            subtext="-30s improvement"
-                            icon={Clock}
-                            color="info"
-                        />
-                        <StatCard
-                            title="Active Alerts"
-                            value={stats.total}
-                            subtext="Verified Incidents"
-                            icon={AlertTriangle}
-                            color="critical"
-                        />
-                        <StatCard
-                            title="Resolved Cases"
-                            value="0"
-                            subtext="Tracking enabled"
-                            icon={CheckCircle}
-                            color="success"
-                        />
                     </div>
 
                     {/* Charts Grid */}
@@ -161,43 +131,7 @@ const AnalyticsPage = () => {
                         </div>
                     </div>
 
-                    {/* Bottom Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[350px]">
-                        {/* Response Time by Zone */}
-                        <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 flex flex-col">
-                            <h3 className="text-lg font-semibold text-white mb-6">Avg Response Time by Zone (mins)</h3>
-                            <div className="flex-1 w-full min-h-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={responseTimeData} layout="vertical">
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={true} vertical={false} />
-                                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                                        <YAxis dataKey="zone" type="category" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} width={60} />
-                                        <Tooltip
-                                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                            contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
-                                        />
-                                        <Bar dataKey="time" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
 
-                        {/* Recent Alerts List */}
-                        <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 overflow-hidden flex flex-col">
-                            <h3 className="text-lg font-semibold text-white mb-4">Recent System Alerts</h3>
-                            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                                        <div className="mt-1 w-2 h-2 rounded-full bg-critical shrink-0 animate-pulse"></div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-200">High traffic congestion detected on Highway 8</p>
-                                            <p className="text-xs text-slate-500 mt-1">2 minutes ago • Zone North</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
             </main>

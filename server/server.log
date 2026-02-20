@@ -1,0 +1,17 @@
+[dotenv@17.2.3] injecting env (1) from ../.env -- tip: ⚙️  override existing env vars with { override: true }
+Ambulance Server running on http://localhost:3000
+Connected to the SQLite database.
+Loaded 10 ambulances from DB.
+User moved far. Triggering World Respawn.
+Spawning World at 28.6139, 77.209
+Loaded 10 ambulances from DB.
+📊 Incident: Confidence=0.88, Auto-Severity=Critical
+🚑 Dispatched Mahesh Ambulance Services - ETA: 917 min (1099.3 km away)
+User moved far. Triggering World Respawn.
+Spawning World at 28.6139, 77.209
+Loaded 10 ambulances from DB.
+Starting Scrape for 28.6139, 77.209...
+📍 Detected City: New-Delhi
+🌐 Scraping URL: https://www.justdial.com/New-Delhi/Ambulance-Services
+Page Title: Top Ambulance Services in New Delhi - Best Emergency Medical Transport Near Me - Justdial
+✅ Extracted 20 ambulances from JustDial.

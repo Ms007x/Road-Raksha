@@ -1,0 +1,247 @@
+[dotenv@17.2.3] injecting env (1) from ../.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🛡️ Admin Server running on http://localhost:3001
+Ambulance Server running on http://localhost:3000
+Connected to the SQLite database.
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 17.4483, 78.3915...
+🧹 Cleared stale ambulances from DB. Will re-seed at user location.
+⚠️  No saved user location found. Geofence will activate when browser connects.
+🔄 Resuming Dispatch for Prasad Hospital -> Incident 86
+🛣️ Route Plan: Prasad Hospital from (18.6490, 78.9386) to (17.3840, 78.4564)
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🔄 Resuming Dispatch for Prasad Hospital -> Incident 86
+GraphHopper Failed, attempting OSRM fallback...
+🏥 Loaded 472 hospitals for dispatch calculation.
+✅ Found and stored 4103 road nodes.
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🔄 Resuming Dispatch for Prasad Hospital -> Incident 86
+🛣️ Route fetched via OSRM Fallback
+🚑 Moving: Prasad Hospital at (18.6488, 78.9387) - Step 0/2881
+🚑 Moving: Prasad Hospital at (18.6487, 78.9388) - Step 0/2881
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+✅ Found and stored 4103 road nodes.
+🚑 Moving: Prasad Hospital at (18.6486, 78.9388) - Step 1/2881
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6485, 78.9389) - Step 1/2881
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6483, 78.9389) - Step 1/2881
+🚑 Moving: Prasad Hospital at (18.6482, 78.9390) - Step 1/2881
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+✅ Found and stored 22011 road nodes.
+🚑 Moving: Prasad Hospital at (18.6480, 78.9391) - Step 2/2881
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6479, 78.9392) - Step 2/2881
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6477, 78.9392) - Step 2/2881
+🚑 Moving: Prasad Hospital at (18.6476, 78.9393) - Step 2/2881
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6474, 78.9394) - Step 3/2881
+🚑 Moving: Prasad Hospital at (18.6473, 78.9395) - Step 3/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6471, 78.9396) - Step 3/2881
+🚑 Moving: Prasad Hospital at (18.6470, 78.9397) - Step 3/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6469, 78.9397) - Step 4/2881
+🚑 Moving: Prasad Hospital at (18.6468, 78.9397) - Step 5/2881
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6466, 78.9396) - Step 5/2881
+🚑 Moving: Prasad Hospital at (18.6466, 78.9396) - Step 6/2881
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+✅ Found and stored 4103 road nodes.
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6464, 78.9396) - Step 6/2881
+🚑 Moving: Prasad Hospital at (18.6462, 78.9396) - Step 6/2881
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6462, 78.9396) - Step 7/2881
+Hosp fetch fail: Request failed with status code 504
+🚑 Moving: Prasad Hospital at (18.6460, 78.9396) - Step 7/2881
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6459, 78.9396) - Step 8/2881
+✅ Found and stored 4103 road nodes.
+🚑 Moving: Prasad Hospital at (18.6458, 78.9396) - Step 8/2881
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6457, 78.9396) - Step 9/2881
+🚑 Moving: Prasad Hospital at (18.6455, 78.9397) - Step 9/2881
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6454, 78.9397) - Step 10/2881
+🚑 Moving: Prasad Hospital at (18.6452, 78.9397) - Step 10/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.65. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6451, 78.9397) - Step 11/2881
+🚑 Moving: Prasad Hospital at (18.6449, 78.9397) - Step 11/2881
+Hosp fetch fail: Request failed with status code 504
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6449, 78.9397) - Step 12/2881
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6447, 78.9397) - Step 12/2881
+❌ Failed to fetch road points: Request failed with status code 429
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6447, 78.9397) - Step 13/2881
+📍 Browser GPS saved: (17.38400, 78.45640) — geofence active
+✅ Found and stored 4103 road nodes.
+🚑 Moving: Prasad Hospital at (18.6445, 78.9396) - Step 13/2881
+Hosp fetch fail: Request failed with status code 504
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6444, 78.9396) - Step 14/2881
+🚑 Moving: Prasad Hospital at (18.6443, 78.9395) - Step 14/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6442, 78.9395) - Step 15/2881
+🚑 Moving: Prasad Hospital at (18.6441, 78.9394) - Step 15/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6440, 78.9393) - Step 16/2881
+Hosp fetch fail: Request failed with status code 504
+❌ Failed to fetch road points: Request failed with status code 504
+🚑 Moving: Prasad Hospital at (18.6439, 78.9392) - Step 16/2881
+🏥 Loaded 81 hospitals for dispatch calculation.
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6437, 78.9391) - Step 16/2881
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6437, 78.9391) - Step 17/2881
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6436, 78.9390) - Step 17/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+Hosp fetch fail: Request failed with status code 504
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6435, 78.9389) - Step 18/2881
+❌ Failed to fetch road points: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6433, 78.9388) - Step 18/2881
+🚑 Moving: Prasad Hospital at (18.6433, 78.9388) - Step 19/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6431, 78.9387) - Step 19/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6430, 78.9386) - Step 20/2881
+🚑 Moving: Prasad Hospital at (18.6428, 78.9385) - Step 20/2881
+🚑 Moving: Prasad Hospital at (18.6427, 78.9385) - Step 21/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6425, 78.9384) - Step 21/2881
+🚑 Moving: Prasad Hospital at (18.6424, 78.9384) - Step 22/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6422, 78.9384) - Step 22/2881
+🚑 Moving: Prasad Hospital at (18.6421, 78.9384) - Step 23/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6419, 78.9384) - Step 23/2881
+🚑 Moving: Prasad Hospital at (18.6418, 78.9384) - Step 24/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6417, 78.9384) - Step 24/2881
+User moved far from 18.64. Triggering World Respawn.
+Spawning World at 18.813698479398596, 78.92542519890424
+📡 Fleet State: 1 units active in memory.
+🛣️ Fetching road points within 3km of 18.813698479398596, 78.92542519890424...
+🚑 Moving: Prasad Hospital at (18.6416, 78.9384) - Step 25/2881
+❌ Failed to fetch road points: Request failed with status code 429
+Hosp fetch fail: Request failed with status code 429
+🚑 Moving: Prasad Hospital at (18.6415, 78.9385) - Step 25/2881
+🚑 Moving: Prasad Hospital at (18.6414, 78.9385) - Step 26/2881
+🚑 Moving: Prasad Hospital at (18.6413, 78.9386) - Step 26/2881
+🚑 Moving: Prasad Hospital at (18.6412, 78.9386) - Step 27/2881
+❌ Failed to fetch road points: Request failed with status code 504
+Hosp fetch fail: Request failed with status code 504

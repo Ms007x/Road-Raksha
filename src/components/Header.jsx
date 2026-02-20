@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, LayoutDashboard, Bell, BarChart2, Folder, Settings, User, BellRing } from 'lucide-react';
+import { Shield, LayoutDashboard, Bell, BarChart2, Folder, Settings, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
@@ -49,10 +49,7 @@ const Header = () => {
                     </div>
                     <span className="text-sm text-slate-300 pr-2">Operator: Chandu Model</span>
                 </div>
-                <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
-                    <BellRing className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-critical rounded-full border-2 border-darker"></span>
-                </button>
+
             </div>
         </header>
     );
