@@ -111,6 +111,19 @@ const db = new sqlite3.Database('./road_raksha.db', (err) => {
             }
         });
 
+        // Hospitals table — persists nearby hospitals across restarts
+        db.run(`CREATE TABLE IF NOT EXISTS hospitals (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            type TEXT,
+            status TEXT DEFAULT 'Open',
+            fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`, (err) => {
+            if (err) console.error('Error creating hospitals table:', err.message);
+        });
+
         // Settings table — persists user GPS across restarts so geofence is active from start
         db.run(`CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
@@ -126,6 +139,24 @@ const db = new sqlite3.Database('./road_raksha.db', (err) => {
                         if (loc && loc.lat && loc.lng) {
                             lastUserLocation = loc;
                             console.log(`📍 Geofence restored from DB: (${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}) — 40km boundary active`);
+
+                            // Load hospitals from DB into memory
+                            db.all(`SELECT * FROM hospitals`, [], (err, rows) => {
+                                if (err || !rows || rows.length === 0) {
+                                    console.log('🏥 No hospitals in DB — will fetch from Overpass on next location update.');
+                                    // Proactively fetch now so dispatch works from startup
+                                    fetchAndSaveHospitals(loc.lat, loc.lng);
+                                    return;
+                                }
+                                hospitals = rows.map(r => ({
+                                    id: r.id,
+                                    name: r.name,
+                                    location: { lat: r.latitude, lng: r.longitude },
+                                    status: r.status || 'Open',
+                                    type: r.type || 'General Hospital'
+                                }));
+                                console.log(`🏥 Loaded ${hospitals.length} hospitals from DB into memory.`);
+                            });
                         }
                     } catch (e) { /* ignore malformed */ }
                 } else {
@@ -175,6 +206,28 @@ let lastUpdate = Date.now();
 let ambulanceServicesEnabled = true; // Toggle for ambulance services
 let lastUserLocation = null; // Real GPS from browser, updated every 2s via /api/ambulances
 
+// ── Route-fetch concurrency limiter ──────────────────────────────────────────
+// Prevents all ambulances hitting OSRM simultaneously and blocking the event loop
+let _activeRouteFetches = 0;
+const MAX_CONCURRENT_ROUTE_FETCHES = 3;
+const withRouteConcurrencyLimit = (fn) => {
+    return new Promise((resolve, reject) => {
+        const attempt = () => {
+            if (_activeRouteFetches < MAX_CONCURRENT_ROUTE_FETCHES) {
+                _activeRouteFetches++;
+                Promise.resolve(fn())
+                    .then(resolve, reject)
+                    .finally(() => { _activeRouteFetches--; });
+            } else {
+                setTimeout(attempt, 200 + Math.random() * 300);
+            }
+        };
+        attempt();
+    });
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 const GRAPHHOPPER_API_KEY = process.env.GRAPHHOPPER_API_KEY;
 
 // OSRM Public API - Robust Road Routing (No Key Required)
@@ -216,7 +269,6 @@ const fetchRoadRoute = async (startLat, startLng, endLat, endLng) => {
             if (response.data.paths && response.data.paths.length > 0) {
                 const path = response.data.paths[0];
                 if (path.points && path.points.coordinates) {
-                    console.log("🛣️ Route fetched via GraphHopper");
                     return path.points.coordinates.map(coord => ({
                         lat: coord[1],
                         lng: coord[0]
@@ -224,7 +276,7 @@ const fetchRoadRoute = async (startLat, startLng, endLat, endLng) => {
                 }
             }
         } catch (error) {
-            console.warn('GraphHopper Failed, attempting OSRM fallback...');
+            // GraphHopper failed silently — fall through to OSRM
         }
     }
 
@@ -390,15 +442,24 @@ const initializeAmbulances = (cLat, cLng) => {
                                 latitude, longitude, current_speed, status, heading, last_updated
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
+                            // ── GEOFENCE: use lastUserLocation as seed centre when available ──
+                            const seedLat = lastUserLocation?.lat ?? parseFloat(centerLat);
+                            const seedLng = lastUserLocation?.lng ?? parseFloat(centerLng);
+                            const SEED_FENCE_KM = 38; // keep well within 40km boundary
+                            const inFencePts = roadPoints.filter(pt =>
+                                calculateDistance(seedLat, seedLng, pt.lat, pt.lng) <= SEED_FENCE_KM
+                            );
+                            const seedPool = inFencePts.length > 5 ? inFencePts : roadPoints;
+
                             sRows.forEach(row => {
                                 let rLat, rLng;
-                                if (roadPoints.length > 5) {
-                                    const pt = roadPoints[Math.floor(Math.random() * roadPoints.length)];
+                                if (seedPool.length > 5) {
+                                    const pt = seedPool[Math.floor(Math.random() * seedPool.length)];
                                     rLat = pt.lat;
                                     rLng = pt.lng;
                                 } else {
-                                    rLat = parseFloat(centerLat) + (Math.random() - 0.5) * 0.08;
-                                    rLng = parseFloat(centerLng) + (Math.random() - 0.5) * 0.08;
+                                    rLat = seedLat + (Math.random() - 0.5) * 0.1;
+                                    rLng = seedLng + (Math.random() - 0.5) * 0.1;
                                 }
                                 const status = Math.random() > 0.4 ? 'moving' : 'standby';
                                 const speed = status === 'moving' ? Math.floor(Math.random() * 30) + 20 : 0;
@@ -434,14 +495,22 @@ const assignNewRoute = async (amb, targetLat, targetLng, isExact = true) => {
         destLng = parseFloat(targetLng);
     } else {
         // For random patrols, pick a known road point to ensure we stay on-road
-        if (globalRoadPoints.length > 10) {
-            const randomNode = globalRoadPoints[Math.floor(Math.random() * globalRoadPoints.length)];
+        // ── GEOFENCE: only pick road nodes that are within 40km of the user ──
+        const PATROL_FENCE_KM = 40;
+        const fenceCentre = lastUserLocation || { lat: parseFloat(targetLat), lng: parseFloat(targetLng) };
+        const inFenceRoadPoints = globalRoadPoints.filter(pt =>
+            calculateDistance(fenceCentre.lat, fenceCentre.lng, pt.lat, pt.lng) <= PATROL_FENCE_KM
+        );
+        const patrolPool = inFenceRoadPoints.length > 5 ? inFenceRoadPoints : globalRoadPoints;
+
+        if (patrolPool.length > 10) {
+            const randomNode = patrolPool[Math.floor(Math.random() * patrolPool.length)];
             destLat = randomNode.lat;
             destLng = randomNode.lng;
         } else {
-            // Fallback to jitter if no road nodes are available
-            destLat = parseFloat(targetLat) + getRandom(-0.02, 0.02);
-            destLng = parseFloat(targetLng) + getRandom(-0.02, 0.02);
+            // Fallback to small jitter centred on the fence centre so we stay close
+            destLat = fenceCentre.lat + getRandom(-0.02, 0.02);
+            destLng = fenceCentre.lng + getRandom(-0.02, 0.02);
         }
     }
 
@@ -456,10 +525,15 @@ const assignNewRoute = async (amb, targetLat, targetLng, isExact = true) => {
     amb.route = []; // Clear old route while thinking
     amb.routeIndex = 0;
 
-    console.log(`🛣️ Route Plan: ${amb.service_name} from (${amb.location.lat.toFixed(4)}, ${amb.location.lng.toFixed(4)}) to (${destLat.toFixed(4)}, ${destLng.toFixed(4)})`);
+    // Only log route plans for on_call missions (not noisy patrol loops)
+    if (isExact) {
+        console.log(`🛣️ Dispatch Route: ${amb.service_name} → (${destLat.toFixed(4)}, ${destLng.toFixed(4)})`);
+    }
 
     try {
-        const route = await fetchRoadRoute(amb.location.lat, amb.location.lng, destLat, destLng);
+        const route = await withRouteConcurrencyLimit(() =>
+            fetchRoadRoute(amb.location.lat, amb.location.lng, destLat, destLng)
+        );
         if (route && route.length > 0) {
             amb.route = route;
             amb.routeIndex = 0;
@@ -505,12 +579,9 @@ const updateAmbulances = () => {
                     lng: currPoint.lng + dLng * ratio
                 };
             }
-            if (amb.status === 'on_call') {
-                console.log(`🚑 Moving: ${amb.service_name} at (${amb.location.lat.toFixed(4)}, ${amb.location.lng.toFixed(4)}) - Step ${amb.routeIndex}/${amb.route.length}`);
-            }
         } else {
             if (amb.status === 'on_call') {
-                console.log(`✅ Ambulance ${amb.service_name} arrived at incident! Waiting 10s...`);
+                console.log(`✅ Ambulance ${amb.service_name} arrived at incident! Waiting 5s before hospital run...`);
 
                 // Update incident status in DB
                 if (amb.assignedIncidentId) {
@@ -520,7 +591,7 @@ const updateAmbulances = () => {
                 // Stage 2: Wait at scene
                 amb.isHalted = true;
                 amb.speed = 0;
-                amb.haltTimer = 10; // 10 seconds
+                amb.haltTimer = 5; // 5 seconds
                 amb.status = 'at_incident';
             } else if (amb.status === 'to_hospital') {
                 console.log(`🏥 Ambulance ${amb.service_name} arrived at Hospital!`);
@@ -550,17 +621,29 @@ const updateAmbulances = () => {
         if (amb.status === 'at_incident' && amb.haltTimer > 0) {
             amb.haltTimer -= deltaTime;
             if (amb.haltTimer <= 0) {
-                console.log(`🚑 10s passed. Moving ${amb.service_name} to nearest hospital...`);
+                console.log(`🚑 5s wait done. Routing ${amb.service_name} to nearest hospital...`);
 
-                if (hospitals.length > 0) {
+                const dispatchToHospital = () => {
+                    if (hospitals.length === 0) {
+                        console.warn(`🏥 No hospitals in memory! Returning ${amb.service_name} to standby.`);
+                        amb.status = 'standby';
+                        amb.isHalted = true;
+                        amb.speed = 0;
+                        amb.route = [];
+                        amb.showRoute = false;
+                        delete amb.assignedIncidentId;
+                        return;
+                    }
+
                     const localHospitals = hospitals.map(h => ({
                         ...h,
                         dist: calculateDistance(amb.location.lat, amb.location.lng, h.location.lat, h.location.lng)
                     })).sort((a, b) => a.dist - b.dist);
 
                     const nearestHosp = localHospitals[0];
+                    console.log(`🏥 Nearest hospital: ${nearestHosp.name} — ${nearestHosp.dist.toFixed(2)}km away`);
 
-                    if (nearestHosp && nearestHosp.dist < 20) { // Max 20km for emergency hospital
+                    if (nearestHosp && nearestHosp.dist <= 40) { // Expanded from 20km to 40km
                         console.log(`🚑 Transporting patient to ${nearestHosp.name} (${nearestHosp.dist.toFixed(1)}km)`);
 
                         // Update DB with hospital
@@ -569,13 +652,13 @@ const updateAmbulances = () => {
                         }
 
                         amb.status = 'to_hospital';
-                        amb.isHalted = false;
+                        amb.isHalted = true; // keep halted UNTIL route arrives
                         amb.speed = 85;
                         amb.routeIndex = 0;
                         amb.route = [];
                         assignNewRoute(amb, nearestHosp.location.lat, nearestHosp.location.lng, true);
                     } else {
-                        console.log(`⚠️ No local hospital within 20km. Returning unit to standby.`);
+                        console.warn(`⚠️ No hospital within 40km (nearest: ${nearestHosp?.dist?.toFixed(1)}km). Returning unit to standby.`);
                         amb.status = 'standby';
                         amb.isHalted = true;
                         amb.speed = 0;
@@ -583,12 +666,15 @@ const updateAmbulances = () => {
                         amb.showRoute = false;
                         delete amb.assignedIncidentId;
                     }
+                };
+
+                // If hospitals not yet loaded, try re-fetching first
+                if (hospitals.length === 0 && lastUserLocation) {
+                    console.log('🏥 Hospitals empty at dispatch time — fetching now...');
+                    fetchAndSaveHospitals(lastUserLocation.lat, lastUserLocation.lng, 10)
+                        .then(dispatchToHospital);
                 } else {
-                    console.warn("No hospitals loaded. Returning unit to standby.");
-                    amb.status = 'standby';
-                    amb.isHalted = true;
-                    amb.route = [];
-                    amb.showRoute = false;
+                    dispatchToHospital();
                 }
             }
         }
@@ -706,13 +792,78 @@ setInterval(() => {
 // --- API Endpoints ---
 
 // NEW: Get Hospitals (fetch from Overpass API)
+// ── Helper: fetch hospitals from Overpass, save to DB and memory ──────────────
+const fetchAndSaveHospitals = async (lat, lng, radiusKm = 10, attempt = 1) => {
+    console.log(`🏥 Fetching hospitals within ${radiusKm}km of (${lat.toFixed(5)}, ${lng.toFixed(5)})... [attempt ${attempt}]`);
+    try {
+        const fetched = await fetchHospitals(lat, lng, radiusKm);
+        let result = fetched;
+        if (!result || result.length === 0) {
+            console.warn('🏥 Overpass returned 0 hospitals. Retrying with 20km radius...');
+            result = await fetchHospitals(lat, lng, 20);
+        }
+
+        if (!result || result.length === 0) {
+            throw new Error('0 hospitals returned even with 20km radius');
+        }
+
+        hospitals = result;
+        console.log(`🏥 Fetched ${hospitals.length} hospitals. Saving to DB...`);
+
+        // Persist each hospital to DB (upsert)
+        db.serialize(() => {
+            const stmt = db.prepare(`
+                INSERT INTO hospitals (id, name, latitude, longitude, type, status, fetched_at)
+                VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    latitude = excluded.latitude,
+                    longitude = excluded.longitude,
+                    type = excluded.type,
+                    fetched_at = excluded.fetched_at
+            `);
+            hospitals.forEach(h => {
+                stmt.run(
+                    h.id.toString(),
+                    h.name,
+                    h.location.lat,
+                    h.location.lng,
+                    h.type || 'General Hospital',
+                    h.status || 'Open'
+                );
+            });
+            stmt.finalize();
+        });
+        console.log(`✅ ${hospitals.length} hospitals saved to DB and loaded into memory.`);
+    } catch (err) {
+        console.error(`🏥 Failed to fetch/save hospitals (attempt ${attempt}): ${err.message}`);
+        // Retry up to 3 times with exponential back-off (15s, 30s, 60s)
+        if (attempt < 3) {
+            const delay = 15000 * attempt;
+            console.log(`🏥 Retrying hospital fetch in ${delay / 1000}s...`);
+            setTimeout(() => fetchAndSaveHospitals(lat, lng, radiusKm, attempt + 1), delay);
+        }
+    }
+};
+
+// Periodic retry every 2 minutes if hospitals are still empty
+setInterval(() => {
+    if (hospitals.length === 0 && lastUserLocation) {
+        console.log('🏥 Hospitals still empty — retrying fetch from user location...');
+        fetchAndSaveHospitals(lastUserLocation.lat, lastUserLocation.lng, 10);
+    }
+}, 2 * 60 * 1000);
+
+
 // Store browser's real GPS immediately (called on dashboard load)
 app.post('/api/set-user-location', (req, res) => {
     const { lat, lng } = req.body;
     const parsedLat = parseFloat(lat);
     const parsedLng = parseFloat(lng);
     if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+        const prevLoc = lastUserLocation;
         lastUserLocation = { lat: parsedLat, lng: parsedLng };
+
         // Persist to DB so geofence survives server restarts
         db.run(
             `INSERT INTO settings (key, value) VALUES ('user_location', ?) 
@@ -720,29 +871,42 @@ app.post('/api/set-user-location', (req, res) => {
             [JSON.stringify(lastUserLocation)],
             (err) => { if (err) console.error('Failed to persist user location:', err.message); }
         );
-        console.log(`📍 Browser GPS saved: (${parsedLat.toFixed(5)}, ${parsedLng.toFixed(5)}) — geofence active`);
-        res.json({ success: true, location: lastUserLocation });
+
+        // Fetch hospitals if: none loaded yet, OR user moved >2km
+        const noHospitals = hospitals.length === 0;
+        const movedFar = prevLoc
+            ? calculateDistance(prevLoc.lat, prevLoc.lng, parsedLat, parsedLng) > 2
+            : true;
+
+        if (noHospitals || movedFar) {
+            fetchAndSaveHospitals(parsedLat, parsedLng, 10);
+        }
+
+        console.log(`📍 Browser GPS saved: (${parsedLat.toFixed(5)}, ${parsedLng.toFixed(5)}) — geofence active. Hospitals: ${hospitals.length}`);
+        res.json({ success: true, location: lastUserLocation, hospitalsLoaded: hospitals.length });
     } else {
         res.status(400).json({ success: false, error: 'Invalid lat/lng' });
     }
 });
 
-app.get('/api/hospitals', async (req, res) => {
-    const lat = parseFloat(req.query.lat);
-    const lng = parseFloat(req.query.lng);
-    const radius = parseFloat(req.query.radius) || 5; // km
-
-    if (isNaN(lat) || isNaN(lng)) {
-        return res.status(400).json({ success: false, error: "Missing lat/lng parameters" });
+app.get('/api/hospitals', (req, res) => {
+    if (hospitals.length === 0 && lastUserLocation) {
+        // Trigger background fetch if nothing loaded yet
+        fetchAndSaveHospitals(lastUserLocation.lat, lastUserLocation.lng, 10);
+        return res.json({ success: true, count: 0, data: [], message: 'Fetching hospitals...' });
     }
-    try {
-        const data = await fetchHospitals(lat, lng, radius);
-        res.json({ success: true, count: data.length, data });
-    } catch (e) {
-        console.error('Failed to fetch hospitals', e);
-        res.status(500).json({ success: false, error: e.message });
-    }
+    // Return hospitals from memory (already fetched from Overpass and saved to DB)
+    const data = hospitals.map(h => ({
+        id: h.id,
+        name: h.name,
+        lat: h.location.lat,
+        lng: h.location.lng,
+        type: h.type || 'Hospital',
+        status: h.status || 'Open'
+    }));
+    res.json({ success: true, count: data.length, data });
 });
+
 
 
 
@@ -889,23 +1053,27 @@ app.post('/api/incidents', async (req, res) => {
     }
 
     // ── 40km Geofence Check (applies to ALL incident types) ──────────────────
-    // AI incidents use lastUserLocation (0km from user) → always pass
-    // External/test incidents with wrong coords → rejected
     const GEOFENCE_RADIUS_KM = 40;
-    if (lastUserLocation) {
-        const distFromUser = calculateDistance(
-            lastUserLocation.lat, lastUserLocation.lng,
-            incidentLat, incidentLng
-        );
-        if (distFromUser > GEOFENCE_RADIUS_KM) {
-            console.warn(`🚫 Incident rejected — outside 40km geofence (${distFromUser.toFixed(1)}km from user)`);
-            return res.status(403).json({
-                success: false,
-                message: `Incident location is ${distFromUser.toFixed(1)}km away — outside the 40km operational boundary.`
-            });
-        }
-        console.log(`✅ Geofence OK — incident is ${distFromUser.toFixed(1)}km from user (within ${GEOFENCE_RADIUS_KM}km)`);
+    if (!lastUserLocation) {
+        // Geofence centre unknown — reject until browser sends GPS
+        console.warn('🚫 Incident rejected — geofence not yet active (no user GPS received)');
+        return res.status(403).json({
+            success: false,
+            message: 'Geofence not yet active. Please open the dashboard so the app can detect your location.'
+        });
     }
+    const distFromUser = calculateDistance(
+        lastUserLocation.lat, lastUserLocation.lng,
+        incidentLat, incidentLng
+    );
+    if (distFromUser > GEOFENCE_RADIUS_KM) {
+        console.warn(`🚫 Incident rejected — outside 40km geofence (${distFromUser.toFixed(1)}km from user)`);
+        return res.status(403).json({
+            success: false,
+            message: `Incident location is ${distFromUser.toFixed(1)}km away — outside the 40km operational boundary.`
+        });
+    }
+    console.log(`✅ Geofence OK — incident is ${distFromUser.toFixed(1)}km from user (within ${GEOFENCE_RADIUS_KM}km)`);
     // ─────────────────────────────────────────────────────────────────────────
 
 
@@ -1230,6 +1398,18 @@ adminApp.get('/api/admin/ambulances', (req, res) => {
 // 2. Add Ambulance (Admin)
 adminApp.post('/api/admin/ambulances', (req, res) => {
     const { service_name, driver_name, contact_number, latitude, longitude, status } = req.body;
+
+    // ── GEOFENCE: reject if coordinates are outside the 40km fence ──
+    if (lastUserLocation) {
+        const dist = calculateDistance(lastUserLocation.lat, lastUserLocation.lng, parseFloat(latitude), parseFloat(longitude));
+        if (dist > 40) {
+            return res.status(403).json({
+                success: false,
+                error: `Ambulance position is ${dist.toFixed(1)}km from user — outside the 40km operational boundary.`
+            });
+        }
+    }
+
     const sql = `INSERT INTO ambulances (service_name, driver_name, contact_number, latitude, longitude, status, current_speed, heading, last_updated) VALUES (?, ?, ?, ?, ?, ?, 0, 0, datetime('now'))`;
     db.run(sql, [service_name, driver_name, contact_number, latitude, longitude, status || 'standby'], function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -1270,21 +1450,38 @@ adminApp.get('/api/admin/hospitals', (req, res) => {
 });
 
 // 6. Add/Delete Hospitals (Admin)
+// 6. Add/Update/Delete Hospitals (Admin - DB Backed)
 adminApp.post('/api/admin/hospitals', (req, res) => {
-    const { name, latitude, longitude, beds_available } = req.body;
-    const newHospital = {
-        id: hospitals.length + 1,
-        name,
-        location: { lat: latitude, lng: longitude },
-        beds_available: beds_available || 10
-    };
-    hospitals.push(newHospital);
-    res.json({ success: true, data: newHospital });
+    const { name, latitude, longitude, type, status } = req.body;
+    const newId = 'manual_' + Date.now();
+    const sql = `INSERT INTO hospitals (id, name, latitude, longitude, type, status) VALUES (?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [newId, name, latitude, longitude, type || 'Hospital', status || 'Open'], function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        const newHospital = { id: newId, name, location: { lat: latitude, lng: longitude }, type: type || 'Hospital', status: status || 'Open' };
+        hospitals.push(newHospital);
+        res.json({ success: true, data: newHospital });
+    });
+});
+
+adminApp.put('/api/admin/hospitals/:id', (req, res) => {
+    const { name, latitude, longitude, type, status } = req.body;
+    const sql = `UPDATE hospitals SET name = ?, latitude = ?, longitude = ?, type = ?, status = ? WHERE id = ?`;
+    db.run(sql, [name, latitude, longitude, type, status, req.params.id], function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        const idx = hospitals.findIndex(h => h.id == req.params.id);
+        if (idx !== -1) {
+            hospitals[idx] = { ...hospitals[idx], name, location: { lat: latitude, lng: longitude }, type, status };
+        }
+        res.json({ success: true, message: "Hospital updated permanently." });
+    });
 });
 
 adminApp.delete('/api/admin/hospitals/:id', (req, res) => {
-    hospitals = hospitals.filter(h => h.id != req.params.id);
-    res.json({ success: true, message: "Hospital removed from session." });
+    db.run("DELETE FROM hospitals WHERE id = ?", [req.params.id], function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        hospitals = hospitals.filter(h => h.id != req.params.id);
+        res.json({ success: true, message: "Hospital deleted permanently." });
+    });
 });
 
 // 7. Cameras (Admin)
@@ -1301,6 +1498,15 @@ adminApp.post('/api/admin/cameras', (req, res) => {
     db.run(sql, [name, location_name, latitude, longitude, feed_url], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, id: this.lastID });
+    });
+});
+
+adminApp.put('/api/admin/cameras/:id', (req, res) => {
+    const { name, location_name, latitude, longitude, feed_url } = req.body;
+    const sql = `UPDATE cameras SET name = ?, location_name = ?, latitude = ?, longitude = ?, feed_url = ? WHERE id = ?`;
+    db.run(sql, [name, location_name, latitude, longitude, feed_url, req.params.id], function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        res.json({ success: true, message: "Camera updated" });
     });
 });
 
@@ -1321,6 +1527,25 @@ adminApp.get('/api/incidents', (req, res) => {
 });
 
 // Delete Single Incident
+adminApp.put('/api/admin/incidents/:id', (req, res) => {
+    const { location, latitude, longitude, severity, status } = req.body;
+    let sql = "UPDATE incidents SET ";
+    let params = [];
+    if (location) { sql += "location = ?, "; params.push(location); }
+    if (latitude !== undefined) { sql += "latitude = ?, "; params.push(latitude); }
+    if (longitude !== undefined) { sql += "longitude = ?, "; params.push(longitude); }
+    if (severity) { sql += "severity = ?, "; params.push(severity); }
+    if (status) { sql += "status = ? "; params.push(status); }
+    if (sql.endsWith(", ")) sql = sql.slice(0, -2);
+    sql += " WHERE id = ?";
+    params.push(req.params.id);
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        res.json({ success: true, message: "Incident modified completely" });
+    });
+});
+
 adminApp.delete('/api/admin/incidents/:id', (req, res) => {
     db.run("DELETE FROM incidents WHERE id = ?", [req.params.id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -1333,6 +1558,115 @@ adminApp.delete('/api/incidents', (req, res) => {
     db.run("DELETE FROM incidents", function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, message: "All incidents cleared." });
+    });
+});
+
+// 9. Force Dispatch (Admin)
+adminApp.post('/api/admin/dispatch', (req, res) => {
+    const { ambulanceId, incidentId } = req.body;
+    const amb = ambulances.find(a => a.id == ambulanceId);
+    if (!amb) return res.status(404).json({ success: false, error: 'Ambulance not found' });
+
+    db.get("SELECT * FROM incidents WHERE id = ?", [incidentId], (err, inc) => {
+        if (err || !inc) return res.status(404).json({ success: false, error: 'Incident not found' });
+
+        assignNewRoute(amb, inc.latitude, inc.longitude);
+        db.run("UPDATE ambulances SET status = 'on_call' WHERE id = ?", [amb.id]);
+        db.run("UPDATE incidents SET status = 'Dispatched' WHERE id = ?", [inc.id]);
+
+        res.json({ success: true, message: `Dispatched ${amb.service_name} to Incident #${inc.id}` });
+    });
+});
+
+// 10. Recall Ambulance (Admin)
+adminApp.post('/api/admin/recall/:id', (req, res) => {
+    const amb = ambulances.find(a => a.id == req.params.id);
+    if (!amb) return res.status(404).json({ success: false, error: 'Ambulance not found' });
+
+    amb.status = 'standby';
+    amb.route = [];
+    amb.routeIndex = 0;
+    amb.destination = null;
+    db.run("UPDATE ambulances SET status = 'standby' WHERE id = ?", [amb.id]);
+
+    res.json({ success: true, message: `Recalled ${amb.service_name} to standby` });
+});
+
+// 11. Create Manual Incident (Admin)
+adminApp.post('/api/admin/incidents', (req, res) => {
+    const { latitude, longitude, severity, description } = req.body;
+    const sql = `INSERT INTO incidents (type, location, latitude, longitude, severity, confidence, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, ['Manual Report', description || 'Manually created by Admin', latitude, longitude, severity || 'Critical', 1.0, 'Pending'], function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        res.json({ success: true, id: this.lastID, message: 'Incident created' });
+    });
+});
+
+// 12. Change Incident Status (Admin)
+adminApp.put('/api/admin/incidents/:id/status', (req, res) => {
+    const { status, severity } = req.body;
+    let sql = "UPDATE incidents SET ";
+    let params = [];
+    if (status) { sql += "status = ? "; params.push(status); }
+    if (severity) { sql += (status ? ", " : "") + "severity = ? "; params.push(severity); }
+    sql += "WHERE id = ?";
+    params.push(req.params.id);
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ success: false, error: err.message });
+        res.json({ success: true, message: 'Incident updated' });
+    });
+});
+
+// 13. Export Incidents CSV (Admin)
+adminApp.get('/api/admin/incidents/export', (req, res) => {
+    db.all("SELECT * FROM incidents ORDER BY timestamp DESC", [], (err, rows) => {
+        if (err) return res.status(500).send("Database error");
+        if (rows.length === 0) return res.send("No incidents found");
+
+        const headers = Object.keys(rows[0]).join(',');
+        const csv = rows.map(row => Object.values(row).map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment('incidents_export.csv');
+        res.send(`${headers}\n${csv}`);
+    });
+});
+
+// 14. Geofence Control (Admin)
+adminApp.get('/api/admin/geofence', (req, res) => {
+    res.json({
+        success: true,
+        center: lastUserLocation,
+        active: !!lastUserLocation
+    });
+});
+
+adminApp.post('/api/admin/geofence', (req, res) => {
+    const { lat, lng } = req.body;
+    lastUserLocation = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    fetchAndSaveHospitals(lastUserLocation.lat, lastUserLocation.lng, 10);
+    res.json({ success: true, message: 'Geofence origin updated manually' });
+});
+
+// 15. Force Refresh Hospitals (Admin)
+adminApp.post('/api/admin/hospitals/refresh', (req, res) => {
+    if (!lastUserLocation) return res.status(400).json({ success: false, error: 'No geofence center set' });
+    fetchAndSaveHospitals(lastUserLocation.lat, lastUserLocation.lng, 10);
+    res.json({ success: true, message: 'Triggered Overpass API hospital fetch' });
+});
+
+// 16. System Health (Admin)
+adminApp.get('/api/admin/system/health', (req, res) => {
+    res.json({
+        success: true,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+        activeRouteFetches: _activeRouteFetches,
+        hospitalCount: hospitals.length,
+        ambulanceCount: ambulances.length,
+        geofenceActive: !!lastUserLocation,
+        servicesEnabled: ambulanceServicesEnabled
     });
 });
 

@@ -21,59 +21,15 @@ WARNING ⚠️ Unable to automatically guess model task, assuming 'task=detect'.
         
   @app.on_event("shutdown")
 Objects Model loaded successfully!
-INFO:     Started server process [65685]
+INFO:     Started server process [87051]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-02-21 09:41:53.902 Python[87051:7097760] WARNING: AVCaptureDeviceTypeExternal is deprecated for Continuity Cameras. Please use AVCaptureDeviceTypeContinuityCamera and add NSCameraUseContinuityCameraDeviceType to your Info.plist.
 🚀 Background Processor Started
 🎥 Opening camera (ID 0)...
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-2026-02-20 23:05:13.930 Python[65685:5810143] WARNING: AVCaptureDeviceTypeExternal is deprecated for Continuity Cameras. Please use AVCaptureDeviceTypeContinuityCamera and add NSCameraUseContinuityCameraDeviceType to your Info.plist.
 ✅ Camera opened successfully!
 Loading ../MOdel/best.mlpackage for CoreML inference...
 Torch version 2.8.0 has not been tested with coremltools. You may run into unexpected errors. Torch 2.7.0 is the most recent version that has been tested.
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 90.87%
 Loading yolov8n.mlpackage for CoreML inference...
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57480 - "GET /status HTTP/1.1" 200 OK

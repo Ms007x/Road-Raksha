@@ -4,6 +4,54 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { AlertTriangle } from 'lucide-react';
 
+// Haversine distance (km) — used for client-side geofence filtering
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+// Invisible label marker placed ~40km north of the geofence centre
+const geofenceLabelIcon = new L.DivIcon({
+    className: '',
+    html: `
+        <div style="
+            background: rgba(59,130,246,0.18);
+            border: 1.5px solid rgba(59,130,246,0.6);
+            color: #93c5fd;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        ">◯ 40 km Operational Zone
+        </div>`,
+    iconSize: [190, 28],
+    iconAnchor: [95, 14],
+});
+
+// Place the zone label on the northern edge of the boundary circle
+const GeofenceLabel = ({ lat, lng }) => {
+    // 40km north in degrees ≈ 0.3597°
+    const labelLat = lat + 0.3597;
+    return (
+        <Marker
+            position={[labelLat, lng]}
+            icon={geofenceLabelIcon}
+            interactive={false}
+            zIndexOffset={-1000}
+        />
+    );
+};
+
 // Fix Leaflet Default Icon Issue
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -195,8 +243,6 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
     const [hospitals, setHospitals] = useState([]);
     const [accidents, setAccidents] = useState([]);
 
-    const [showAlert, setShowAlert] = useState(false);
-    const [lastAccidentId, setLastAccidentId] = useState(null);
     const [selectedAmbulanceId, setSelectedAmbulanceId] = useState(null);
 
     // Removed internal geolocation as it's now handled by DashboardPage
@@ -225,17 +271,6 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
             if (data.success && data.data.length > 0) {
                 const latestAccidents = data.data;
                 setAccidents(latestAccidents);
-
-                // Trigger Alert if a NEW accident is detected
-                const latestId = latestAccidents[0].id;
-                if (lastAccidentId !== null && latestId !== lastAccidentId) {
-                    setShowAlert(true);
-                    // Log for debugging
-                    console.log("🚨 NEW ACCIDENT DETECTED! Showing Alert.");
-                    // Auto hide after 8 seconds
-                    setTimeout(() => setShowAlert(false), 8000);
-                }
-                setLastAccidentId(latestId);
             }
         } catch (err) {
             console.error("Failed to fetch accidents", err);
@@ -263,46 +298,41 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
             init();
         }
 
-        // Initial Hospital Fetch (same as before)
+        // Fetch hospitals from backend (auto-loaded from Overpass based on user GPS)
         const fetchHospitals = async () => {
-            if (!userLocation) return;
             try {
-                const query = `
-                    [out:json];
-                    (
-                      node["amenity"="hospital"](around:5000, ${userLocation.lat}, ${userLocation.lng});
-                      way["amenity"="hospital"](around:5000, ${userLocation.lat}, ${userLocation.lng});
-                      relation["amenity"="hospital"](around:5000, ${userLocation.lat}, ${userLocation.lng});
-                    );
-                    out center;
-                `;
-                const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-                const res = await fetch(url);
+                const res = await fetch('http://localhost:3000/api/hospitals');
                 const data = await res.json();
-
-                if (data.elements) {
-                    const mappedHospitals = data.elements.map(el => ({
-                        id: el.id,
-                        name: el.tags.name || "Unknown Hospital",
-                        lat: el.lat || el.center.lat,
-                        lng: el.lon || el.center.lon,
-                        beds: "Unknown",
-                        type: el.tags.healthcare || "Hospital"
-                    }));
-                    setHospitals(mappedHospitals);
+                if (data.success && data.data.length > 0) {
+                    setHospitals(data.data.map(h => ({
+                        id: h.id,
+                        name: h.name,
+                        lat: h.lat,
+                        lng: h.lng,
+                        type: h.type || 'Hospital'
+                    })));
                 }
             } catch (err) {
-                console.error("Failed to fetch hospitals from OSM", err);
+                console.error('Failed to fetch hospitals from backend', err);
             }
         };
         fetchHospitals();
+        // Re-poll every 60s so hospitals refresh if user has moved far
+        const hospInterval = setInterval(fetchHospitals, 60000);
 
-        // Update both ambulances and accidents every 2 seconds
-        const interval = setInterval(() => {
-            fetchAmbulances();
-            fetchAccidents();
-        }, 2000);
-        return () => clearInterval(interval);
+
+        // Staggered polling: ambulances every 2s, accidents every 3s, offset so they don't fire together
+        const ambInterval = setInterval(() => fetchAmbulances(), 2000);
+        const accInterval = setInterval(() => fetchAccidents(), 3000);
+        // Offset accident polling by 1s so it never coincides with ambulance poll
+        const accDelay = setTimeout(() => fetchAccidents(), 1000);
+
+        return () => {
+            clearInterval(ambInterval);
+            clearInterval(accInterval);
+            clearInterval(hospInterval);
+            clearTimeout(accDelay);
+        };
 
     }, [userLocation?.lat, userLocation?.lng]);
 
@@ -321,28 +351,7 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
 
     return (
         <div className="w-full h-full relative">
-            {/* Real-time Accident Alert Overlay */}
-            {showAlert && (
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[2000] animate-bounce pointer-events-auto">
-                    <div className="bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-white/20 backdrop-blur-md">
-                        <div className="bg-white/20 p-2 rounded-full animate-pulse">
-                            <span className="text-3xl">🚨</span>
-                        </div>
-                        <div>
-                            <h4 className="text-xl font-bold">ACCIDENT DETECTED</h4>
-                            <p className="text-sm text-white/80 font-medium">New incident reported at current location</p>
-                        </div>
-                        <button
-                            onClick={() => setShowAlert(false)}
-                            className="ml-4 text-white/60 hover:text-white"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Removed Scrape Control Overlay */}
+            {/* Removed: Accident Alert Overlay */}
 
 
             <MapContainer
@@ -359,20 +368,23 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
                 <RecenterMap lat={userLocation?.lat} lng={userLocation?.lng} />
                 <MapClickHandler onClick={() => setSelectedAmbulanceId(null)} />
 
-                {/* 40km Geofence Boundary Circle */}
+                {/* 40km Geofence Boundary Circle + Zone Label */}
                 {userLocation && (
-                    <Circle
-                        center={[userLocation.lat, userLocation.lng]}
-                        radius={40000}
-                        pathOptions={{
-                            color: '#3b82f6',
-                            weight: 2,
-                            opacity: 0.8,
-                            dashArray: '10, 8',
-                            fillColor: '#3b82f6',
-                            fillOpacity: 0.04,
-                        }}
-                    />
+                    <>
+                        <Circle
+                            center={[userLocation.lat, userLocation.lng]}
+                            radius={40000}
+                            pathOptions={{
+                                color: '#3b82f6',
+                                weight: 2,
+                                opacity: 0.8,
+                                dashArray: '10, 8',
+                                fillColor: '#3b82f6',
+                                fillOpacity: 0.04,
+                            }}
+                        />
+                        <GeofenceLabel lat={userLocation.lat} lng={userLocation.lng} />
+                    </>
                 )}
 
                 {/* Ambulance Routes (Show for selected OR dispatched ambulances) */}
@@ -457,49 +469,54 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
 
                 }
 
-                {/* Accident Markers */}
-                {accidents.map(accident => (
-                    <Marker
-                        key={accident.id}
-                        position={[accident.lat, accident.lng]}
-                        icon={createAccidentIcon(accident.severity, accident.status)}
-                    >
-                        <Tooltip direction="top" offset={[0, -20]} opacity={1}>
-                            <div className="font-bold text-sm">🚨 Accident Detected</div>
-                            <div className={`text-xs font-semibold ${accident.severity === 'Critical' ? 'text-red-600' :
-                                accident.severity === 'Minor' ? 'text-yellow-600' : 'text-orange-600'
-                                }`}>
-                                {accident.severity.toUpperCase()}
-                            </div>
-                        </Tooltip>
-                        <Popup>
-                            <div className="min-w-[250px]">
-                                <h3 className="font-bold text-lg mb-2 text-red-600">🚨 Accident Alert</h3>
-                                <div className="text-sm text-gray-700 space-y-2">
-                                    <div className="flex justify-between items-center pb-2 border-b">
-                                        <span className="font-semibold">Severity:</span>
-                                        <span className={`px-2 py-0.5 rounded text-white text-xs font-bold ${accident.severity === 'Critical' ? 'bg-red-500' :
-                                            accident.severity === 'Minor' ? 'bg-yellow-500' : 'bg-orange-500'
-                                            }`}>
-                                            {accident.severity}
-                                        </span>
-                                    </div>
-                                    <p><strong>Location:</strong> {accident.location}</p>
-                                    <p><strong>Status:</strong> <span className={`font-semibold ${accident.status === 'Arrived' ? 'text-green-600' :
-                                        accident.status === 'Dispatched' ? 'text-yellow-600' : 'text-red-600'
-                                        }`}>{accident.status}</span></p>
-                                    <p><strong>Time:</strong> {accident.timestamp}</p>
-                                    {accident.confidence && (
-                                        <p><strong>AI Confidence:</strong> {(accident.confidence * 100).toFixed(1)}%</p>
-                                    )}
-                                    <div className="mt-3 pt-2 border-t">
-                                        <p className="text-xs text-gray-500">ID: INC-{accident.id}</p>
+                {/* Accident Markers — filtered to 40km geofence */}
+                {accidents
+                    .filter(accident => {
+                        if (!userLocation) return true; // show everything if no GPS yet
+                        return haversineKm(userLocation.lat, userLocation.lng, accident.lat, accident.lng) <= 40;
+                    })
+                    .map(accident => (
+                        <Marker
+                            key={accident.id}
+                            position={[accident.lat, accident.lng]}
+                            icon={createAccidentIcon(accident.severity, accident.status)}
+                        >
+                            <Tooltip direction="top" offset={[0, -20]} opacity={1}>
+                                <div className="font-bold text-sm">🚨 Accident Detected</div>
+                                <div className={`text-xs font-semibold ${accident.severity === 'Critical' ? 'text-red-600' :
+                                    accident.severity === 'Minor' ? 'text-yellow-600' : 'text-orange-600'
+                                    }`}>
+                                    {accident.severity.toUpperCase()}
+                                </div>
+                            </Tooltip>
+                            <Popup>
+                                <div className="min-w-[250px]">
+                                    <h3 className="font-bold text-lg mb-2 text-red-600">🚨 Accident Alert</h3>
+                                    <div className="text-sm text-gray-700 space-y-2">
+                                        <div className="flex justify-between items-center pb-2 border-b">
+                                            <span className="font-semibold">Severity:</span>
+                                            <span className={`px-2 py-0.5 rounded text-white text-xs font-bold ${accident.severity === 'Critical' ? 'bg-red-500' :
+                                                accident.severity === 'Minor' ? 'bg-yellow-500' : 'bg-orange-500'
+                                                }`}>
+                                                {accident.severity}
+                                            </span>
+                                        </div>
+                                        <p><strong>Location:</strong> {accident.location}</p>
+                                        <p><strong>Status:</strong> <span className={`font-semibold ${accident.status === 'Arrived' ? 'text-green-600' :
+                                            accident.status === 'Dispatched' ? 'text-yellow-600' : 'text-red-600'
+                                            }`}>{accident.status}</span></p>
+                                        <p><strong>Time:</strong> {accident.timestamp}</p>
+                                        {accident.confidence && (
+                                            <p><strong>AI Confidence:</strong> {(accident.confidence * 100).toFixed(1)}%</p>
+                                        )}
+                                        <div className="mt-3 pt-2 border-t">
+                                            <p className="text-xs text-gray-500">ID: INC-{accident.id}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Popup>
-                    </Marker>
-                ))}
+                            </Popup>
+                        </Marker>
+                    ))}
 
                 {/* Hospitals (Real Data from OSM) */}
                 {hospitals.map(hos => (

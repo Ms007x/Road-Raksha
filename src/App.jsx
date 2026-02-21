@@ -6,7 +6,6 @@ import IncidentsPage from './pages/IncidentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SettingsPage from './pages/SettingsPage';
-import AdminPanel from './pages/AdminPanel';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -75,14 +74,6 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <SettingsPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/admin"
-                    element={
-                        <ProtectedRoute>
-                            <AdminPanel />
                         </ProtectedRoute>
                     }
                 />

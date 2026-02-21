@@ -17,6 +17,7 @@ BOLD='\033[1m'
 # Ports
 BACKEND_PORT=3000
 FRONTEND_PORT=5173
+ADMIN_PORT=5174
 AI_PORT=8000
 LOG_DIR="./logs"
 
@@ -84,6 +85,34 @@ stop_frontend() {
     fi
 }
 
+# --- Admin Panel ---
+start_admin() {
+    echo -e "${BLUE}🛡️  Starting Admin Panel Server...${NC}"
+    if check_port $ADMIN_PORT; then
+        echo -e "   ${YELLOW}⚠️  Admin panel already running on port $ADMIN_PORT${NC}"
+    else
+        cd "$ROOT_DIR/admin-app" && npm run dev > "$ROOT_DIR/$LOG_DIR/admin.log" 2>&1 &
+        sleep 3
+        if check_port $ADMIN_PORT; then
+            echo -e "   ${GREEN}✅ Admin panel started (PID: $(lsof -ti:$ADMIN_PORT))${NC}"
+        else
+            echo -e "   ${RED}❌ Failed to start Admin panel. Check $LOG_DIR/admin.log${NC}"
+        fi
+    fi
+}
+
+stop_admin() {
+    echo -e "${RED}🛡️  Stopping Admin Panel Server...${NC}"
+    if check_port $ADMIN_PORT; then
+        lsof -ti:$ADMIN_PORT | xargs kill -9 2>/dev/null
+        # Ensure we kill vite from the admin-app directory if possible
+        pkill -f "vite.*admin-app" 2>/dev/null
+        echo -e "   ${GREEN}✅ Admin panel stopped${NC}"
+    else
+        echo -e "   ${YELLOW}ℹ️  No Admin panel running on port $ADMIN_PORT${NC}"
+    fi
+}
+
 # --- AI ---
 start_ai() {
     echo -e "${BLUE}🤖 Starting AI Server...${NC}"
@@ -144,6 +173,12 @@ status() {
         echo -e "   Frontend: ${RED}STOPPED${NC}"
     fi
     
+    if check_port $ADMIN_PORT; then
+        echo -e "   Admin:    ${GREEN}RUNNING${NC} (Port: $ADMIN_PORT, URL: http://localhost:$ADMIN_PORT)"
+    else
+        echo -e "   Admin:    ${RED}STOPPED${NC}"
+    fi
+    
     if check_port $AI_PORT; then
         echo -e "   AI:       ${GREEN}RUNNING${NC} (Port: $AI_PORT, URL: http://localhost:$AI_PORT)"
     else
@@ -158,9 +193,10 @@ usage() {
     echo -e "Usage: ./rr {start|stop|restart|status} [service]"
     echo -e ""
     echo -e "Services:"
-    echo -e "  all      - All services (Backend, Frontend, AI)"
+    echo -e "  all      - All services (Backend, Frontend, Admin, AI)"
     echo -e "  backend  - Node.js API server (Port: $BACKEND_PORT)"
     echo -e "  frontend - Vite dev server (Port: $FRONTEND_PORT)"
+    echo -e "  admin    - Admin Panel app (Port: $ADMIN_PORT)"
     echo -e "  ai       - Python AI server (Port: $AI_PORT)"
     echo -e ""
     echo -e "Examples:"
@@ -181,8 +217,9 @@ case "$COMMAND" in
         case "$SERVICE" in
             backend)  start_backend ;;
             frontend) start_frontend ;;
+            admin)    start_admin ;;
             ai)       start_ai ;;
-            all)      start_backend; start_frontend; start_ai; status ;;
+            all)      start_backend; start_frontend; start_admin; start_ai; status ;;
             *)        usage ;;
         esac
         ;;
@@ -190,8 +227,9 @@ case "$COMMAND" in
         case "$SERVICE" in
             backend)  stop_backend ;;
             frontend) stop_frontend ;;
+            admin)    stop_admin ;;
             ai)       stop_ai ;;
-            all)      stop_backend; stop_frontend; stop_ai ;;
+            all)      stop_backend; stop_frontend; stop_admin; stop_ai ;;
             *)        usage ;;
         esac
         ;;
