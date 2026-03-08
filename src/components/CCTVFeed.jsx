@@ -16,7 +16,7 @@ const CCTVFeed = ({ userLocation, latestAccident }) => {
                 })
             }).catch(err => console.error("Failed to sync location with AI server:", err));
         }
-    }, [latestAccident?.id]);
+    }, [latestAccident?.id ?? null]);
 
     const streamUrl = "http://localhost:8000/video_feed";
 

@@ -203,7 +203,8 @@ const IncidentsPage = () => {
     const getSeverityColor = (severity) => {
         switch (severity) {
             case 'Critical': return 'text-critical';
-            case 'Minor': return 'text-warning';
+            case 'Major': return 'text-warning';
+            case 'Minor': return 'text-success';
             default: return 'text-slate-400';
         }
     };
@@ -211,6 +212,8 @@ const IncidentsPage = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Dispatched': return 'text-success';
+            case 'Arrived': return 'text-success';
+            case 'On Scene': return 'text-info';
             case 'Pending': return 'text-info';
             case 'Closed': return 'text-slate-500';
             default: return 'text-slate-400';

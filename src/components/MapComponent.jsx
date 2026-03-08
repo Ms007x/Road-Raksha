@@ -341,10 +341,10 @@ const MapComponent = ({ userLocation, setUserLocation }) => {
 
     if (!userLocation) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <h3 className="text-xl font-semibold text-gray-700">Detecting Location...</h3>
-                <p className="text-sm text-gray-500 mt-2">Please allow location access to see ambulances nearby.</p>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-darker">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <h3 className="text-xl font-semibold text-white">Detecting Location...</h3>
+                <p className="text-sm text-slate-400 mt-2">Please allow location access to see ambulances nearby.</p>
             </div>
         );
     }

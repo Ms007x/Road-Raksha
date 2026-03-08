@@ -18,26 +18,56 @@ const cctvs = [
 
 const ResourceCard = ({ resource, type }) => {
     let Icon = Activity;
-    let color = 'primary';
+    let colorClass = 'text-primary';
+    let bgClass = 'bg-primary/10';
+    let borderClass = 'border-primary/20';
 
     if (type === 'AMBULANCE') {
         Icon = Truck;
-        color = resource.status === 'Available' ? 'success' : (resource.status === 'Busy' ? 'critical' : 'warning');
+        if (resource.status === 'Available' || resource.status === 'standby') {
+            colorClass = 'text-success';
+            bgClass = 'bg-success/10';
+            borderClass = 'border-success/20';
+        } else if (resource.status === 'Busy' || resource.status === 'on_call') {
+            colorClass = 'text-critical';
+            bgClass = 'bg-critical/10';
+            borderClass = 'border-critical/20';
+        } else {
+            colorClass = 'text-warning';
+            bgClass = 'bg-warning/10';
+            borderClass = 'border-warning/20';
+        }
     } else if (type === 'CCTV') {
         Icon = Camera;
-        color = resource.status === 'Active' ? 'success' : 'slate-500';
+        if (resource.status === 'Active') {
+            colorClass = 'text-success';
+            bgClass = 'bg-success/10';
+            borderClass = 'border-success/20';
+        } else {
+            colorClass = 'text-slate-500';
+            bgClass = 'bg-slate-500/10';
+            borderClass = 'border-slate-500/20';
+        }
     } else if (type === 'HOSPITAL') {
         Icon = Building2;
-        color = resource.status === 'Open' ? 'success' : 'warning';
+        if (resource.status === 'Open') {
+            colorClass = 'text-success';
+            bgClass = 'bg-success/10';
+            borderClass = 'border-success/20';
+        } else {
+            colorClass = 'text-warning';
+            bgClass = 'bg-warning/10';
+            borderClass = 'border-warning/20';
+        }
     }
 
     return (
         <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 hover:bg-panel/70 transition-all group">
             <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-lg bg-${color}/10 text-${color} group-hover:scale-110 transition-transform`}>
+                <div className={`p-3 rounded-lg ${bgClass} ${colorClass} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-6 h-6" />
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${color}/20 text-${color} border border-${color}/20`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${bgClass} ${colorClass} border ${borderClass}`}>
                     {resource.status}
                 </span>
             </div>
@@ -52,7 +82,9 @@ const ResourceCard = ({ resource, type }) => {
             <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-2 text-sm text-slate-300">
                     <MapPin className="w-4 h-4 text-slate-500" />
-                    <span>{resource.location.lat ? `Lat: ${resource.location.lat.toFixed(4)}` : resource.location}</span>
+                    <span>{type === 'AMBULANCE' || type === 'HOSPITAL'
+                        ? (resource.location?.lat ? `Lat: ${resource.location.lat.toFixed(4)}` : resource.location)
+                        : resource.location}</span>
                 </div>
 
                 {type === 'AMBULANCE' && (

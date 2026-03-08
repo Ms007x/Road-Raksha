@@ -7,18 +7,29 @@ import { Activity } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
-    <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 flex items-start justify-between hover:bg-panel/70 transition-colors">
-        <div>
-            <p className="text-slate-400 text-sm font-medium mb-1">{title}</p>
-            <h3 className="text-3xl font-bold text-white mb-2">{value}</h3>
-            <p className="text-xs text-slate-500">{subtext}</p>
+const StatCard = ({ title, value, subtext, icon: Icon, color }) => {
+    const colorClasses = {
+        primary: 'bg-primary/10 text-primary',
+        success: 'bg-success/10 text-success',
+        warning: 'bg-warning/10 text-warning',
+        critical: 'bg-critical/10 text-critical',
+        info: 'bg-info/10 text-info',
+    };
+    const classes = colorClasses[color] || colorClasses.primary;
+
+    return (
+        <div className="bg-panel/50 backdrop-blur-sm border border-panel-border rounded-xl p-6 flex items-start justify-between hover:bg-panel/70 transition-colors">
+            <div>
+                <p className="text-slate-400 text-sm font-medium mb-1">{title}</p>
+                <h3 className="text-3xl font-bold text-white mb-2">{value}</h3>
+                <p className="text-xs text-slate-500">{subtext}</p>
+            </div>
+            <div className={`p-3 rounded-lg ${classes}`}>
+                <Icon className="w-6 h-6" />
+            </div>
         </div>
-        <div className={`p-3 rounded-lg bg-${color}/10 text-${color}`}>
-            <Icon className="w-6 h-6" />
-        </div>
-    </div>
-);
+    );
+};
 
 const AnalyticsPage = () => {
     const [stats, setStats] = useState({

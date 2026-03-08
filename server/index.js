@@ -373,7 +373,7 @@ const initializeAmbulances = (cLat, cLng) => {
             }
 
             // Map loaded rows
-            const loadedAmbulances = (rows || []).map(row => ({
+            const loadedAmbulances = (rows || []).map((row, index) => ({
                 id: row.id.toString(),
                 service_name: row.service_name,
                 driverName: row.driver_name,
@@ -390,7 +390,8 @@ const initializeAmbulances = (cLat, cLng) => {
                 isHalted: row.status === 'standby',
                 haltTimer: 0,
                 assignedIncidentId: row.assigned_incident_id,
-                showRoute: row.status === 'on_call'
+                showRoute: row.status === 'on_call',
+                patrolDirection: index % 8 // 0-7: N, NE, E, SE, S, SW, W, NW
             }));
 
             // Merge with existing memory (priority to current memory if already exists)
@@ -403,6 +404,43 @@ const initializeAmbulances = (cLat, cLng) => {
 
             if (ambulances.length > 0) {
                 console.log(`📡 Fleet State: ${ambulances.length} units active in memory.`);
+
+                // Ensure minimum 10 ambulances by adding dummy ones if needed
+                if (ambulances.length < 10) {
+                    const needed = 10 - ambulances.length;
+                    console.log(`⚠️ Fleet below minimum. Adding ${needed} dummy ambulances...`);
+                    
+                    const seedLat = lastUserLocation?.lat ?? centerLat;
+                    const seedLng = lastUserLocation?.lng ?? centerLng;
+                    
+                    for (let i = 0; i < needed; i++) {
+                        const dummyAmb = {
+                            id: `dummy_${Date.now()}_${i}`,
+                            service_name: `Emergency Unit ${ambulances.length + i + 1}`,
+                            driverName: 'On Duty',
+                            contact_number: '+91-000-000-0000',
+                            address: 'City Emergency Response',
+                            location: {
+                                lat: seedLat + (Math.random() - 0.5) * 0.05,
+                                lng: seedLng + (Math.random() - 0.5) * 0.05
+                            },
+                            speed: Math.random() > 0.4 ? Math.floor(Math.random() * 30) + 20 : 0,
+                            status: Math.random() > 0.4 ? 'moving' : 'standby',
+                            heading: Math.floor(Math.random() * 360),
+                            lastUpdated: new Date().toISOString(),
+                            route: [],
+                            routeIndex: 0,
+                            destination: null,
+                            isHalted: Math.random() <= 0.4,
+                            haltTimer: 0,
+                            assignedIncidentId: null,
+                            showRoute: false,
+                            patrolDirection: (ambulances.length + i) % 8
+                        };
+                        ambulances.push(dummyAmb);
+                    }
+                    console.log(`✅ Fleet now has ${ambulances.length} units.`);
+                }
 
                 // Also fetch hospitals and road points for simulation use
                 fetchHospitals(centerLat, centerLng, 10).then(hData => {
@@ -435,6 +473,10 @@ const initializeAmbulances = (cLat, cLng) => {
                 fetchRoadPoints(centerLat, centerLng, 3).then(roadPoints => {
                     db.all("SELECT * FROM scraped_ambulances LIMIT 50", [], (err, sRows) => {
                         if (sRows && sRows.length > 0) {
+                            // Ensure at least 10 ambulances
+                            while (sRows.length < 10) {
+                                sRows.push({...sRows[sRows.length % sRows.length]});
+                            }
                             console.log(`Seeding ${sRows.length} units...`);
                             const now = new Date().toISOString();
                             const stmt = db.prepare(`INSERT INTO ambulances (
@@ -474,6 +516,29 @@ const initializeAmbulances = (cLat, cLng) => {
                             setTimeout(() => initializeAmbulances(centerLat, centerLng), 200);
                             resolve();
                         } else {
+                            // No scraped ambulances data - create 10 dummy ambulances directly
+                            console.log("No scraped ambulances found. Creating 10 dummy units...");
+                            const seedLat = lastUserLocation?.lat ?? parseFloat(centerLat);
+                            const seedLng = lastUserLocation?.lng ?? parseFloat(centerLng);
+                            const now = new Date().toISOString();
+                            
+                            for (let i = 0; i < 10; i++) {
+                                const rLat = seedLat + (Math.random() - 0.5) * 0.05;
+                                const rLng = seedLng + (Math.random() - 0.5) * 0.05;
+                                const status = Math.random() > 0.4 ? 'moving' : 'standby';
+                                const speed = status === 'moving' ? Math.floor(Math.random() * 30) + 20 : 0;
+                                const heading = Math.floor(Math.random() * 360);
+                                
+                                db.run(`INSERT INTO ambulances (
+                                    service_name, driver_name, contact_number, address,
+                                    latitude, longitude, current_speed, status, heading, last_updated
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [`Emergency Unit ${i + 1}`, 'On Duty', '+91-000-000-0000', 'City Emergency Response', 
+                                 rLat, rLng, speed, status, heading, now]);
+                            }
+                            
+                            // Reload to get DB IDs
+                            setTimeout(() => initializeAmbulances(centerLat, centerLng), 200);
                             resolve();
                         }
                     });
@@ -494,23 +559,62 @@ const assignNewRoute = async (amb, targetLat, targetLng, isExact = true) => {
         destLat = parseFloat(targetLat);
         destLng = parseFloat(targetLng);
     } else {
-        // For random patrols, pick a known road point to ensure we stay on-road
-        // ── GEOFENCE: only pick road nodes that are within 40km of the user ──
+        // For patrols, pick a destination in the ambulance's assigned patrol direction
         const PATROL_FENCE_KM = 40;
         const fenceCentre = lastUserLocation || { lat: parseFloat(targetLat), lng: parseFloat(targetLng) };
+        
+        // Patrol direction angles (0-7): N, NE, E, SE, S, SW, W, NW
+        const directionAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+        const directionAngle = directionAngles[amb.patrolDirection || 0];
+        
+        // Calculate target point in the patrol direction (5-15km out)
+        const patrolDistanceKm = 5 + Math.random() * 10; // 5-15km patrol range
+        const angleRad = (directionAngle * Math.PI) / 180;
+        
+        // Approximate conversion: 1 degree lat ≈ 111km, 1 degree lng ≈ 111km * cos(lat)
+        const latOffset = (patrolDistanceKm * Math.cos(angleRad)) / 111;
+        const lngOffset = (patrolDistanceKm * Math.sin(angleRad)) / (111 * Math.cos(fenceCentre.lat * Math.PI / 180));
+        
+        let patrolTargetLat = fenceCentre.lat + latOffset;
+        let patrolTargetLng = fenceCentre.lng + lngOffset;
+        
+        // Ensure we stay within 40km geofence
+        const distFromCenter = calculateDistance(fenceCentre.lat, fenceCentre.lng, patrolTargetLat, patrolTargetLng);
+        if (distFromCenter > PATROL_FENCE_KM) {
+            // Scale back to stay within fence
+            const scale = PATROL_FENCE_KM / distFromCenter * 0.9;
+            patrolTargetLat = fenceCentre.lat + latOffset * scale;
+            patrolTargetLng = fenceCentre.lng + lngOffset * scale;
+        }
+        
+        // Find nearest road point to the target location for realistic routing
         const inFenceRoadPoints = globalRoadPoints.filter(pt =>
             calculateDistance(fenceCentre.lat, fenceCentre.lng, pt.lat, pt.lng) <= PATROL_FENCE_KM
         );
         const patrolPool = inFenceRoadPoints.length > 5 ? inFenceRoadPoints : globalRoadPoints;
-
+        
         if (patrolPool.length > 10) {
-            const randomNode = patrolPool[Math.floor(Math.random() * patrolPool.length)];
-            destLat = randomNode.lat;
-            destLng = randomNode.lng;
+            // Find road point closest to our directional target
+            let nearestRoadPoint = null;
+            let minRoadDist = Infinity;
+            patrolPool.forEach(pt => {
+                const d = calculateDistance(patrolTargetLat, patrolTargetLng, pt.lat, pt.lng);
+                if (d < minRoadDist) {
+                    minRoadDist = d;
+                    nearestRoadPoint = pt;
+                }
+            });
+            
+            if (nearestRoadPoint) {
+                destLat = nearestRoadPoint.lat;
+                destLng = nearestRoadPoint.lng;
+            } else {
+                destLat = patrolTargetLat;
+                destLng = patrolTargetLng;
+            }
         } else {
-            // Fallback to small jitter centred on the fence centre so we stay close
-            destLat = fenceCentre.lat + getRandom(-0.02, 0.02);
-            destLng = fenceCentre.lng + getRandom(-0.02, 0.02);
+            destLat = patrolTargetLat;
+            destLng = patrolTargetLng;
         }
     }
 
@@ -1007,7 +1111,7 @@ app.post('/api/incidents', async (req, res) => {
         );
     });
 
-    // Check Active Incidents Limit (raised to 5)
+    // Check Active Incidents Limit (max 3 concurrent)
     const activeCount = await new Promise((resolve) => {
         db.get(
             "SELECT COUNT(*) as count FROM incidents WHERE status IN ('Pending', 'Dispatched', 'Arrived', 'On Scene')",
@@ -1016,8 +1120,8 @@ app.post('/api/incidents', async (req, res) => {
         );
     });
 
-    if (activeCount >= 5) {
-        console.warn(`⚠️ Filtered Incident: System busy with ${activeCount} active tasks (limit 5).`);
+    if (activeCount >= 3) {
+        console.warn(`⚠️ Filtered Incident: System busy with ${activeCount} active tasks (limit 3).`);
         return res.status(429).json({
             success: false,
             message: "System busy. Max 3 active incidents allowed."
@@ -1667,6 +1771,124 @@ adminApp.get('/api/admin/system/health', (req, res) => {
         ambulanceCount: ambulances.length,
         geofenceActive: !!lastUserLocation,
         servicesEnabled: ambulanceServicesEnabled
+    });
+});
+
+// Driver Status Update Endpoint (for Driver Mobile App)
+app.post('/api/driver/status', (req, res) => {
+    const { ambulanceId, status, lat, lng } = req.body;
+    
+    // Find ambulance by ID or service_name
+    const amb = ambulances.find(a => a.id === ambulanceId || a.service_name === ambulanceId);
+    
+    if (!amb) {
+        return res.status(404).json({ success: false, error: 'Ambulance not found' });
+    }
+
+    // Update location if provided
+    if (lat && lng) {
+        amb.location = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    }
+
+    // Handle status transitions
+    switch (status) {
+        case 'at_incident':
+            amb.status = 'at_incident';
+            amb.isHalted = true;
+            amb.speed = 0;
+            amb.haltTimer = 5; // 5 second wait before hospital
+            
+            // Update incident status
+            if (amb.assignedIncidentId) {
+                db.run("UPDATE incidents SET status = 'Arrived', reached_time = CURRENT_TIMESTAMP WHERE id = ?", 
+                    [amb.assignedIncidentId]);
+            }
+            console.log(`🚑 Driver ${amb.service_name} arrived at incident`);
+            break;
+            
+        case 'to_hospital':
+            amb.status = 'to_hospital';
+            amb.isHalted = false;
+            amb.speed = 85;
+            
+            // Find nearest hospital and route to it
+            if (hospitals.length > 0) {
+                const sortedHospitals = hospitals.map(h => ({
+                    ...h,
+                    dist: calculateDistance(amb.location.lat, amb.location.lng, h.location.lat, h.location.lng)
+                })).sort((a, b) => a.dist - b.dist);
+                
+                const nearestHosp = sortedHospitals[0];
+                if (nearestHosp && nearestHosp.dist <= 40) {
+                    amb.route = [];
+                    amb.routeIndex = 0;
+                    assignNewRoute(amb, nearestHosp.location.lat, nearestHosp.location.lng, true);
+                    
+                    // Update DB
+                    if (amb.assignedIncidentId) {
+                        db.run("UPDATE incidents SET hospital = ?, status = 'On Scene' WHERE id = ?", 
+                            [nearestHosp.name, amb.assignedIncidentId]);
+                    }
+                    console.log(`🚑 Driver ${amb.service_name} transporting to ${nearestHosp.name}`);
+                }
+            }
+            break;
+            
+        case 'standby':
+            amb.status = 'standby';
+            amb.isHalted = true;
+            amb.speed = 0;
+            amb.route = [];
+            amb.showRoute = false;
+            
+            // Close incident if assigned
+            if (amb.assignedIncidentId) {
+                db.run("UPDATE incidents SET status = 'Closed' WHERE id = ?", [amb.assignedIncidentId]);
+                console.log(`✅ Incident ${amb.assignedIncidentId} closed by driver`);
+            }
+            delete amb.assignedIncidentId;
+            break;
+            
+        default:
+            amb.status = status;
+    }
+
+    // Update DB
+    db.run("UPDATE ambulances SET status = ?, latitude = ?, longitude = ?, current_speed = ?, assigned_incident_id = ? WHERE id = ?",
+        [amb.status, amb.location.lat, amb.location.lng, amb.speed, amb.assignedIncidentId || null, amb.id]);
+
+    res.json({ 
+        success: true, 
+        status: amb.status,
+        ambulance: amb.service_name,
+        message: `Status updated to ${status}` 
+    });
+});
+
+// Get single ambulance status (for Driver App)
+app.get('/api/driver/ambulance/:id', (req, res) => {
+    const { id } = req.params;
+    const amb = ambulances.find(a => a.id === id || a.service_name === id);
+    
+    if (!amb) {
+        return res.status(404).json({ success: false, error: 'Ambulance not found' });
+    }
+
+    res.json({
+        success: true,
+        data: {
+            id: amb.id,
+            service_name: amb.service_name,
+            driverName: amb.driverName,
+            contact_number: amb.contact_number,
+            location: amb.location,
+            status: amb.status,
+            speed: amb.speed,
+            heading: amb.heading,
+            assignedIncidentId: amb.assignedIncidentId,
+            route: amb.route,
+            destination: amb.destination
+        }
     });
 });
 

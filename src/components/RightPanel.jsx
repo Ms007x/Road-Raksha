@@ -52,7 +52,7 @@ const RightPanel = ({ userLocation }) => {
         // Poll every 1s
         const interval = setInterval(fetchData, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [userLocation]);
 
     const handleDispatch = async (incidentId) => {
         try {

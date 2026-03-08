@@ -6,6 +6,7 @@ import IncidentsPage from './pages/IncidentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SettingsPage from './pages/SettingsPage';
+import DriverPage from './pages/DriverPage';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -77,6 +78,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/driver" element={<DriverPage />} />
                 <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
             </Routes>
         </Router>

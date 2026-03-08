@@ -1,4 +1,4 @@
-/Users/madhavsamalla/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+/Users/madhavsamalla/Desktop/Road-Raksha/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
 🌍 Detecting AI Server location...
 ✅ AI Location Set: Hyderabad (17.384, 78.4564)
@@ -21,15 +21,310 @@ WARNING ⚠️ Unable to automatically guess model task, assuming 'task=detect'.
         
   @app.on_event("shutdown")
 Objects Model loaded successfully!
-INFO:     Started server process [87051]
+INFO:     Started server process [2820]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2026-02-21 09:41:53.902 Python[87051:7097760] WARNING: AVCaptureDeviceTypeExternal is deprecated for Continuity Cameras. Please use AVCaptureDeviceTypeContinuityCamera and add NSCameraUseContinuityCameraDeviceType to your Info.plist.
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
+[ WARN:0@3.122] global cap_ffmpeg_impl.hpp:1217 open VIDEOIO/FFMPEG: Failed list devices for backend avfoundation
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
 🚀 Background Processor Started
 🎥 Opening camera (ID 0)...
-✅ Camera opened successfully!
+❌ Could not open camera 0.
+🎥 Opening camera (ID 0)...
+❌ Could not open camera 0.
 Loading ../MOdel/best.mlpackage for CoreML inference...
 Torch version 2.8.0 has not been tested with coremltools. You may run into unexpected errors. Torch 2.7.0 is the most recent version that has been tested.
-🚨 Accident Detected! Confidence: 90.87%
 Loading yolov8n.mlpackage for CoreML inference...
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
+OpenCV: not authorized to capture video (status 0), requesting...
+OpenCV: can not spin main run loop from other thread, set OPENCV_AVFOUNDATION_SKIP_AUTH=1 to disable authorization request and perform it in your application.
+OpenCV: camera failed to properly initialize!
+2026-03-06 09:47:55.515 Python[2820:17187848] WARNING: AVCaptureDeviceTypeExternal is deprecated for Continuity Cameras. Please use AVCaptureDeviceTypeContinuityCamera and add NSCameraUseContinuityCameraDeviceType to your Info.plist.
+🎥 Opening camera (ID 0)...
+❌ Could not open camera 0.
+🎥 Opening camera (ID 0)...
+❌ Could not open camera 0.
+🚨 Accident Detected! Confidence: 88.72%
+🎥 Opening camera (ID 0)...
+❌ Could not open camera 0.
+🎥 Opening camera (ID 0)...
+❌ Could not open camera 0.
+🚨 Accident Detected! Confidence: 88.62%
+🚨 Accident Detected! Confidence: 87.16%
+🎥 Opening camera (ID 0)...
+✅ Camera opened successfully!
+🚨 Accident Detected! Confidence: 90.72%
+🚨 Accident Detected! Confidence: 93.21%
+🚨 Accident Detected! Confidence: 89.40%
+🚨 REPORTING Incident 26 → Hyderabad (17.3840, 78.4564)
+✅ Incident 26 SAVED → ID:120 Status:Dispatched Dispatch:Dispatched Hyderabad Ambulance Services - ETA: 2 min (0.7 km away)
+🚨 Accident Detected! Confidence: 93.75%
+🚨 Accident Detected! Confidence: 88.33%
+🚨 Accident Detected! Confidence: 86.08%
+🚨 Accident Detected! Confidence: 87.26%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 86.18%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "OPTIONS /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 87.45%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 88.18%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 85.55%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 87.40%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 89.31%
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65257 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65351 - "GET /video_feed?cam=CAM-01 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65353 - "GET /video_feed?cam=CAM-02 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65355 - "GET /video_feed?cam=CAM-04 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65358 - "GET /video_feed?cam=CAM-06 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65357 - "GET /video_feed?cam=CAM-05 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65366 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65366 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65366 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65259 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 87.50%
+🚨 Accident Detected! Confidence: 85.16%
+🚨 Accident Detected! Confidence: 85.40%
+🚨 Accident Detected! Confidence: 87.45%
+🚨 Accident Detected! Confidence: 91.11%
+🚨 Accident Detected! Confidence: 88.62%
+🚨 REPORTING Incident 106 → User Location (18.3503, 79.1600)
+✅ Incident 106 SAVED → ID:121 Status:Dispatched Dispatch:Dispatched Emergency Unit 13 - ETA: Infinity min (1.0 km away)
+🚨 Accident Detected! Confidence: 89.06%
+INFO:     127.0.0.1:49402 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49402 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49402 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49402 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49402 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 88.18%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 88.38%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 88.18%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 90.09%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 REPORTING Incident 121 → User Location (18.3504, 79.1599)
+✅ Incident 121 SAVED → ID:122 Status:Dispatched Dispatch:Dispatched Emergency Unit 5 - ETA: 3 min (1.2 km away)
+🚨 Accident Detected! Confidence: 93.26%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 90.87%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 88.87%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "POST /set_location HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 85.16%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 REPORTING Incident 127 → User Location (18.3504, 79.1599)
+⚠️ Incident 127 REJECTED — System busy (too many active incidents).
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 85.50%
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49405 - "GET /status HTTP/1.1" 200 OK
+🚨 Accident Detected! Confidence: 85.30%
+INFO:     127.0.0.1:49424 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49424 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "POST /set_location HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49426 - "GET /status HTTP/1.1" 200 OK

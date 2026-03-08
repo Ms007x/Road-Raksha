@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, LayoutDashboard, Bell, BarChart2, Folder, Settings, User } from 'lucide-react';
+import { Shield, LayoutDashboard, Bell, BarChart2, Folder, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
@@ -43,13 +43,6 @@ const Header = () => {
             </nav>
 
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3 px-3 py-1.5 bg-panel rounded-full border border-panel-border">
-                    <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center">
-                        <User className="w-5 h-5 text-slate-300" />
-                    </div>
-                    <span className="text-sm text-slate-300 pr-2">Operator: Chandu Model</span>
-                </div>
-
             </div>
         </header>
     );
